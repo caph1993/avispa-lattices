@@ -206,12 +206,15 @@ class Poset(Relation):
 
     @cached_property
     def is_distributive(self):
-        method = lambda: self.as_distributive(check=True)
+        method = lambda: MD.validation.assert_is_distributive(
+            self.as_lattice(check=True))
         return MD.validation.ValidationError.capture(method)
 
-    def as_distributive(self, check: bool):
-        return cast(DistributiveLattice,
-                    self.copy(cls=DistributiveLattice, check=check))
+    @cached_property
+    def is_modular(self):
+        method = lambda: MD.validation.assert_is_modular(
+            self.as_lattice(check=True))
+        return MD.validation.ValidationError.capture(method)
 
     '''
     @section
@@ -456,10 +459,3 @@ class Lattice(Poset):
             if f == f_prev:
                 break
         return f
-
-
-class DistributiveLattice(Lattice):
-
-    def validate(self):
-        super().validate()
-        MD.validation.assert_is_distributive(self)
