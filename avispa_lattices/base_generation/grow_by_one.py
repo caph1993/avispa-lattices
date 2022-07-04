@@ -1,13 +1,11 @@
 from __future__ import annotations
 from collections import deque
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING
 
-from torch import ClassType
 if TYPE_CHECKING:
     from ..base import Lattice
 
 import numpy as np
-from typing import List, Sequence
 from itertools import chain
 from ..utils.iterators import cartesian
 

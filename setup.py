@@ -12,6 +12,9 @@ setup(
     packages=find_packages(),
     install_requires=[
         'numpy',
+        'typing-extensions',
+        'pillow',
+        'ipython',
         'pyhash',
         'pydotplus',
     ],

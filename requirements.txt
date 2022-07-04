@@ -1,0 +1,6 @@
+numpy
+typing-extensions
+pyhash
+pydotplus
+ipython
+pillow
