@@ -2,11 +2,11 @@ from __future__ import annotations
 from typing import Any, Callable, Generic, Iterable, List, Optional, Sequence, Set, Tuple, TypeVar, Union, cast
 import numpy as np
 import itertools
-from .utils.cache_utils import cached_property, cached_method
+from .utils.methodtools import cached_property, cached_method
 from .utils.algorithm_tarjan import Tarjan
 from .utils.numpy_types import npBoolMatrix, npUInt64Matrix
 from .utils.algorithm_floyd_warshall import floyd_warshall
-from cp93pytools.methodtools import implemented_at
+from .utils.methodtools import implemented_at
 from . import base_methods as MD
 from .base_methods.validation import PosetExceptions
 

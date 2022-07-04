@@ -12,7 +12,6 @@ setup(
     packages=find_packages(),
     install_requires=[
         'numpy',
-        'caph1993-pytools>=0.4.2',
         'pyhash',
         'pydotplus',
     ],

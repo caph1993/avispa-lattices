@@ -107,7 +107,7 @@ def show(
                     gr[f[i]].append(i)
             labels = [','.join(map(str, l)) for l in gr]
 
-    if extra and L.is_lattice and L.f_preserves_lub(f):
+    if extra and L.is_lattice and f is not None and L.f_preserves_lub(f):
         extra_edges = {'darkgreen': extra}
     else:
         extra_edges = {'blue': extra}

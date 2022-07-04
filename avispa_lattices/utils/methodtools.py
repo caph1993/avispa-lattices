@@ -3,10 +3,71 @@ import weakref
 from typing import Any, Callable, Optional, Type, TypeVar, Union, cast
 from typing_extensions import Protocol
 from typing import Callable, TypeVar, Generic
+import types
 # Cached property both in library and in object
 
 _T = TypeVar('_T')
-#import cp93pytools.methodtools
+F = TypeVar('F', bound=Callable[..., Any])
+
+
+def copy_function(f: F, name: Optional[str] = None) -> F:
+    """Based on http://stackoverflow.com/a/6528148/190597"""
+    g = types.FunctionType(
+        f.__code__,
+        f.__globals__,
+        name=name or f.__name__,
+        argdefs=f.__defaults__,
+        closure=f.__closure__,
+    )
+    g = functools.update_wrapper(g, f)
+    g.__kwdefaults__ = f.__kwdefaults__
+    return cast(F, g)
+
+
+class implemented_at(Generic[F]):
+    '''
+    Decorator that ignores the wrapped function and uses the
+    parameter function instead.
+    
+    Useful for implementing methods in separate files.
+        Docs are copied so that any editor can provide help(method).
+        Types signatures are copied so that type checkers work seamlessly.
+    
+    For usage details see help(implemented_at.usage)
+    '''
+
+    def __init__(self, target: F) -> None:
+        self.target = target
+
+    def __call__(self, wrapped: Callable[..., Any]) -> F:
+        return copy_function(self.target, wrapped.__name__)
+
+    @staticmethod
+    def usage():
+        '''
+        # --- main.py ---
+        (from .) import other_file
+
+        class Hello:
+            @implemented_at(other_file.hello)
+            def hello(self):
+                ...
+
+        # --- other_file.py ---
+        from __future__ import annotations
+        from typing import TYPE_CHECKING, Type
+        if TYPE_CHECKING:
+            from (.)main import Hello
+
+        def hello(obj: Hello, name:str):
+            'I just say "hello {name}" for some given name'
+            print(f'hello {name}')
+
+        # --- interactive console ---
+        h = Hello()
+        help(h.hello)
+        h.hello('world')
+        '''
 
 
 class _Property(Protocol[_T]):
