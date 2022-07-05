@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Callable, List
 
 if TYPE_CHECKING:
-    from ..base import Lattice, Poset, Relation
+    from ..base import Lattice, Poset, Relation, DistributiveLattice, ModularLattice
 
 import numpy as np
 
@@ -197,7 +197,7 @@ class NotDistributive(ValidationError):
     _message = 'Given lattice is not distributive'
 
 
-def assert_is_distributive(self: Lattice):
+def assert_is_distributive(self: DistributiveLattice):
     'Find i, j, k that violate distributivity. None otherwise'
     n = self.n
     lub = self.lub
@@ -218,7 +218,7 @@ class NotModular(ValidationError):
     _message = 'Given lattice is not distributive'
 
 
-def assert_is_modular(self: Lattice):
+def assert_is_modular(self: ModularLattice):
     'Find i, j, k that violate modularity. None otherwise'
     n = self.n
     leq = self.leq
@@ -259,22 +259,3 @@ class PosetExceptions:
     NoBottoms = NoBottoms
     NoTops = NoTops
     NotModular = NotModular
-
-
-# def lub_of_set(L: Lattice, *elems: int) -> int:
-#     if not elems:
-#         return L.bottom
-#     lub = L.lub
-#     acum = elems[0]
-#     for elem in elems[1:]:
-#         acum = lub[acum, elem]
-#     return acum
-
-# def glb_of_set(L: Lattice, *elems: int) -> int:
-#     if not elems:
-#         return L.top
-#     glb = L.glb
-#     acum = elems[0]
-#     for elem in elems[1:]:
-#         acum = glb[acum, elem]
-#     return acum

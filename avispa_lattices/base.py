@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import Any, Callable, Generic, Iterable, List, Optional, Sequence, Set, Tuple, TypeVar, Union, cast
+import functools
+from typing import Any, Callable, Generic, Iterable, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, cast, overload
 import numpy as np
 import itertools
 from .utils.methodtools import cached_property, cached_method
@@ -57,15 +58,23 @@ class Relation:
         return MD.validation.ValidationError.capture(method)
 
     def as_poset(self, check: bool):
-        return cast(Poset, self.copy(cls=Poset, check=check))
+        return self.copy_as(Poset, check=check)
 
-    def copy(self, cls=None, check=False):
-        cls = cls or self.__class__
+    def copy(self, check=False):
+        return self.copy_as(self.__class__, check=check)
+
+    def copy_as(self, cls: Type[_T], check=False) -> _T:
         kwargs = self.__dict__.copy()
         kwargs.pop('leq')
         kwargs.pop('labels', None)
         cpy = cls(self.leq, labels=self.labels, check=check, **kwargs)
         return cpy
+
+    def copy_if(self, cls: Type[_T]) -> Optional[_T]:
+        try:
+            return self.copy_as(cls, check=True)
+        except MD.validation.ValidationError:
+            return None
 
     def reindex(self, rank: List[int], inverse=False):
         return MD.identity.reindex(self, rank, inverse=inverse)
@@ -92,7 +101,7 @@ class Relation:
     def total(cls, n: int):
         'total order of n elements'
         G = [[i - 1] if i > 0 else [] for i in range(n)]
-        return cls.from_children(G, check=False)  #.as_lattice(check=False)
+        return cls.from_children(G, check=False)
 
     '''
     @section
@@ -198,23 +207,7 @@ class Poset(Relation):
 
     @cached_property
     def is_lattice(self):
-        method = lambda: self.as_lattice(check=True)
-        return MD.validation.ValidationError.capture(method)
-
-    def as_lattice(self, check: bool):
-        return cast(Lattice, self.copy(cls=Lattice, check=check))
-
-    @cached_property
-    def is_distributive(self):
-        method = lambda: MD.validation.assert_is_distributive(
-            self.as_lattice(check=True))
-        return MD.validation.ValidationError.capture(method)
-
-    @cached_property
-    def is_modular(self):
-        method = lambda: MD.validation.assert_is_modular(
-            self.as_lattice(check=True))
-        return MD.validation.ValidationError.capture(method)
+        return self.copy_if(Lattice) is not None
 
     '''
     @section
@@ -336,6 +329,14 @@ class Lattice(Poset):
         MD.validation.assert_is_lattice(self)
 
     @cached_property
+    def is_distributive(self):
+        return self.copy_if(DistributiveLattice) is not None
+
+    @cached_property
+    def is_modular(self):
+        return self.copy_if(ModularLattice) is not None
+
+    @cached_property
     def lub(self):
         'matrix of i lub j, i.e. i join j'
         n = self.n
@@ -402,60 +403,70 @@ class Lattice(Poset):
         m_children = cast(Tuple[List[List[int]]], m_children)
         return m, m_topo, m_children
 
-    def lub_of_many(self, *elems: int) -> int:
-        if not elems:
-            return self.bottom
-        lub = self.lub
-        acum = elems[0]
-        for elem in elems[1:]:
-            acum = lub[acum, elem]
-        return acum
+    def lub_of_many(self, elems: Iterable[int]) -> int:
+        return functools.reduce(
+            function=lambda i, j: self.lub[i, j],
+            sequence=elems,
+            initial=self.bottom,
+        )
 
-    def glb_of_many(self, *elems: int) -> int:
-        if not elems:
-            return self.top
-        glb = self.glb
-        acum = elems[0]
-        for elem in elems[1:]:
-            acum = glb[acum, elem]
-        return acum
+    def glb_of_many(self, elems: Iterable[int]) -> int:
+        return functools.reduce(
+            function=lambda i, j: self.glb[i, j],
+            sequence=elems,
+            initial=self.top,
+        )
 
-    def f_preserves_lub(self, f: Endomorphism):
-        return all(f[self.lub[i, j]] == self.lub[f[i], f[j]]
-                   for i in range(self.n)
-                   for j in range(self.n))
 
-    def f_lub(self, f: Endomorphism, g: Endomorphism) -> Endomorphism:
-        return [self.lub[f[i], g[i]] for i in range(self.n)]
+class DistributiveLattice(Lattice):
 
-    def f_glb_pointwise(self, f: Endomorphism, g: Endomorphism) -> Endomorphism:
-        return [self.glb[f[i], g[i]] for i in range(self.n)]
+    def validate(self):
+        super().validate()
+        MD.validation.assert_is_distributive(self)
 
-    def f_glb(self, f: Endomorphism, g: Endomorphism) -> Endomorphism:
-        return self.f_preserving_lub(self.f_glb_pointwise(f, g))
 
-    def f_preserving_lub(self, f: Endomorphism,
-                         budget: Optional[int] = None) -> Endomorphism:
-        '''
-        The famous algorithm that fixes iteratively the pairs of
-        elements in the lattice that fail to satisfy the LUB axiom
-        '''
-        lub = self.lub
-        leq = self.leq
-        it = itertools.count() if budget is None else range(budget)
-        for _ in it:
-            f_prev = f.copy()
-            for i in range(self.n):
-                for j in range(self.n):
-                    k = lub[i, j]
-                    fi_lub_fj = lub[f[i], f[j]]
-                    if fi_lub_fj == f[k]:
-                        pass
-                    elif leq[f[k], fi_lub_fj]:
-                        f[k] = fi_lub_fj
-                    else:
-                        f[i] = lub[f[i], f[k]]
-                        f[j] = lub[f[j], f[k]]
-            if f == f_prev:
-                break
-        return f
+class ModularLattice(Lattice):
+
+    def validate(self):
+        super().validate()
+        MD.validation.assert_is_modular(self)
+
+    # def f_preserves_lub(self, f: Endomorphism):
+    #     return all(f[self.lub[i, j]] == self.lub[f[i], f[j]]
+    #                for i in range(self.n)
+    #                for j in range(self.n))
+
+    # def f_lub(self, f: Endomorphism, g: Endomorphism) -> Endomorphism:
+    #     return [self.lub[f[i], g[i]] for i in range(self.n)]
+
+    # def f_glb_pointwise(self, f: Endomorphism, g: Endomorphism) -> Endomorphism:
+    #     return [self.glb[f[i], g[i]] for i in range(self.n)]
+
+    # def f_glb(self, f: Endomorphism, g: Endomorphism) -> Endomorphism:
+    #     return self.f_preserving_lub(self.f_glb_pointwise(f, g))
+
+    # def f_preserving_lub(self, f: Endomorphism,
+    #                      budget: Optional[int] = None) -> Endomorphism:
+    #     '''
+    #     The famous algorithm that fixes iteratively the pairs of
+    #     elements in the lattice that fail to satisfy the LUB axiom
+    #     '''
+    #     lub = self.lub
+    #     leq = self.leq
+    #     it = itertools.count() if budget is None else range(budget)
+    #     for _ in it:
+    #         f_prev = f.copy()
+    #         for i in range(self.n):
+    #             for j in range(self.n):
+    #                 k = lub[i, j]
+    #                 fi_lub_fj = lub[f[i], f[j]]
+    #                 if fi_lub_fj == f[k]:
+    #                     pass
+    #                 elif leq[f[k], fi_lub_fj]:
+    #                     f[k] = fi_lub_fj
+    #                 else:
+    #                     f[i] = lub[f[i], f[k]]
+    #                     f[j] = lub[f[j], f[k]]
+    #         if f == f_prev:
+    #             break
+    #     return f
