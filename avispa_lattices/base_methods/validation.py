@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Callable, List
+import itertools
 
 if TYPE_CHECKING:
     from ..base import Lattice, Poset, Relation, DistributiveLattice, ModularLattice
@@ -224,16 +225,13 @@ def assert_is_modular(self: ModularLattice):
     leq = self.leq
     lub = self.lub
     glb = self.glb
-    for i in range(n):
-        for j in range(n):
-            if leq[i, j]:
-                for k in range(n):
-                    if glb[i, lub[k, j]] != lub[glb[i, k], j]:
-                        raise NotModular(
-                            f'Non modular lattice:\n'
-                            f'{i} glb ({k} lub {j}) = {i} glb {lub[k,j]} = '
-                            f'{glb[i,lub[k,j]]} != {lub[glb[i,k],j]} = '
-                            f'{glb[i,k]} lub {j} = ({i} glb {k}) lub {j})')
+    for i, j, k in itertools.product(range(n), repeat=3):
+        if leq[i, j] and glb[i, lub[k, j]] != lub[glb[i, k], j]:
+            msg = (f'Non modular lattice:\n'
+                   f'{i} glb ({k} lub {j}) = {i} glb {lub[k,j]} = '
+                   f'{glb[i,lub[k,j]]} != {lub[glb[i,k],j]} = '
+                   f'{glb[i,k]} lub {j} = ({i} glb {k}) lub {j})')
+            raise NotModular(msg)
     return
 
 

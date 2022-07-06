@@ -11,3 +11,10 @@ def floyd_warshall(adj: npBoolMatrix, infinity: int) -> npUInt64Matrix:
     for k in range(len(dist)):
         np.minimum(dist, dist[:, k, None] + dist[None, k, :], out=dist)
     return dist
+
+
+def transitive_closure(leq: npBoolMatrix):
+    n = len(leq)
+    dist = floyd_warshall(leq, infinity=n)
+    rel: npBoolMatrix = (dist < len(dist))
+    return rel

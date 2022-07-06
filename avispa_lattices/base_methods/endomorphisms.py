@@ -1,13 +1,46 @@
 from __future__ import annotations
 import functools
 import itertools
-from typing import TYPE_CHECKING, Callable, Iterable, List, Optional, Union, cast
+from typing import TYPE_CHECKING, Callable, Iterable, List, Literal, Optional, Sequence, Tuple, Union, cast
 from collections import deque
+import typing
 
 if TYPE_CHECKING:
     from ..base import Lattice, Poset, Relation, Endomorphism, PartialEndomorphism, DistributiveLattice
 
-import numpy as np
+
+def f_lub(self, *functions: Endomorphism) -> Endomorphism:
+    'Pointwise lowest upper bound of a set of functions'
+    return f_lub_pointwise(self, functions)
+
+
+_T_GLB_methods = Literal['auto', 'pointwise', 'Gmeet', 'GMeet+', 'DMeet+',
+                         'JMeet', 'CMeet',]
+GLB_methods: Tuple[str] = typing.get_args(_T_GLB_methods)
+
+
+def f_glb(L: Lattice, *functions: Endomorphism, method='auto') -> Endomorphism:
+    '''
+    Greatest lower bound of a set of functions.
+    '''
+    if method == 'auto':
+        if L.is_distributive:
+            method = 'DMeet+'
+        else:
+            method = 'GMeet+'
+    assert method in GLB_methods, f'"{method}" not in {GLB_methods}'
+    if method == 'pointwise':
+        return f_glb_pointwise(L, functions)
+    elif method == 'GMeet':
+        return f_glb_GMeet(L, functions)
+    elif method == 'GMeet+':
+        raise NotImplementedError
+    elif method == 'DMeet+':
+        L = cast(DistributiveLattice, L)
+        #L = L.as_type(DistributiveLattice)
+        return f_glb_DMeet_plus(L, functions)
+    else:
+        raise NotImplementedError(f'"{method}" not in {GLB_methods}')
 
 
 def f_glb_pointwise(L: Lattice,
@@ -25,9 +58,9 @@ def f_glb_pointwise(L: Lattice,
         h[L.bottom] = L.bottom
         return h
     h = functools.reduce(
-        function=lambda f, g: [L.glb[f[i], g[i]] for i in range(L.n)],
-        sequence=functions,
-        initial=first,
+        lambda f, g: [L.glb[f[i], g[i]] for i in range(L.n)],
+        functions,
+        first,
     )
     return h
 
@@ -45,14 +78,14 @@ def f_lub_pointwise(L: Lattice,
     except ValueError:
         return [L.bottom] * L.n
     h = functools.reduce(
-        function=lambda f, g: [L.lub[f[i], g[i]] for i in range(L.n)],
-        sequence=functions,
-        initial=first,
+        lambda f, g: [L.lub[f[i], g[i]] for i in range(L.n)],
+        functions,
+        first,
     )
     return h
 
 
-def GMeet_naive(L: Lattice, functions: Iterable[Endomorphism]) -> Endomorphism:
+def f_glb_GMeet(L: Lattice, functions: Iterable[Endomorphism]) -> Endomorphism:
     """
     Greatest lower bound of a set of lub-functions.
 
@@ -94,8 +127,8 @@ def fix_f_naive(L: Lattice, f: Endomorphism,
     return f
 
 
-def DMeet_plus(L: DistributiveLattice,
-               *functions: Endomorphism) -> Endomorphism:
+def f_glb_DMeet_plus(L: DistributiveLattice,
+                     functions: Sequence[Endomorphism]) -> Endomorphism:
     """
     Greatest lower bound of a set of lub-functions in O(n*m).
         n = L.n
@@ -123,9 +156,12 @@ def DMeet_plus(L: DistributiveLattice,
         x = work.popleft()
         if h[x] is not None:
             continue
-        assert len(covers[x]) >= 2, \
-            'Invariant violated: "If x has at most 1 cover then h[x] != None"'
-        i, j = covers[x]
+        try:
+            i, j, *_ = covers[x]
+        except ValueError as e:
+            raise e from Exception(
+                'Invariant violated: "If x has at most 1 cover then h[x] != None"'
+            )
         if h[i] is None or h[j] is None:
             if h[i] is None:
                 work.append(i)
@@ -136,10 +172,3 @@ def DMeet_plus(L: DistributiveLattice,
             h[x] = L.lub[h[i], h[j]]
     h = cast(Endomorphism, h)
     return h
-
-
-# def f_lub(self, f: Endomorphism, g: Endomorphism) -> Endomorphism:
-#     return [self.lub[f[i], g[i]] for i in range(self.n)]
-
-# def f_glb(self, f: Endomorphism, g: Endomorphism) -> Endomorphism:
-#     return self.f_preserving_lub(self.f_glb_pointwise(f, g))

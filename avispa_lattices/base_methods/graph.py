@@ -9,23 +9,6 @@ from ..utils.numpy_types import npBoolMatrix, npUInt64Matrix
 from collections import deque
 
 
-def parents_to_children(parents):
-    n = len(parents)
-    children = [[] for _ in range(n)]
-    for ch in range(n):
-        for pa in parents[ch]:
-            children[pa].append(ch)
-    return children
-
-
-def child_to_dist(child: npBoolMatrix, assume_poset=False):
-    'Compute all pairs shortest distances using Floyd-Warshall algorithm'
-    # To do: use toposort or repeated dijsktra if assume_poset==True
-    dist = floyd_warshall(child, infinity=child.shape[0])
-    dist.flags.writeable = False
-    return dist
-
-
 def floyd_warshall(adj: npBoolMatrix, infinity: int) -> npUInt64Matrix:
     'Compute all pairs shortest distances using Floyd-Warshall algorithm'
     dist: npUInt64Matrix

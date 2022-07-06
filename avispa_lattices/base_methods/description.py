@@ -27,7 +27,7 @@ def name(self: Poset):
         return f'Uninitialized {self.__class__.__name__}'
     n = self.n
     P = self.parents
-    topo = self.MD.graphs.toposort(self)
+    topo = self.toposort_bottom_up
     Pstr = lambda i: ','.join(map(str, P[i]))
     it = (f'{i}<-{Pstr(i)}' for i in topo if P[i])
     name = ' : '.join([f'{n}', *it])

@@ -1,9 +1,8 @@
 from __future__ import annotations
 from collections import deque
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
-if TYPE_CHECKING:
-    from ..base import Lattice
+from ..base import Lattice
 
 import numpy as np
 from itertools import chain
@@ -81,9 +80,12 @@ def iter_add_node(self: Lattice):
     return
 
 
-def iter_all_latices(cls, max_size):
-    q: deque[Lattice] = deque(
-        [cls.from_children(x) for x in [[], [[]], [[], [0]]]])
+def iter_all_latices(max_size: int, starting_lattice: Optional[Lattice] = None):
+    q: deque[Lattice]
+    if starting_lattice is None:
+        q = deque([Lattice.from_children(x) for x in [[], [[]], [[], [0]]]])
+    else:
+        q = deque([starting_lattice])
     vis = set()
     while q:
         U = q.popleft()
@@ -93,3 +95,4 @@ def iter_all_latices(cls, max_size):
             if V not in vis:
                 vis.add(V)
                 q.append(V)
+    return

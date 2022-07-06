@@ -4,6 +4,7 @@ from . import graphviz as graphviz
 from . import description as description
 from . import identity as identity
 from . import interface as interface
+from . import endomorphisms as endomorphisms
 
 # class IdentityMethods:
 

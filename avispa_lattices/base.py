@@ -6,14 +6,34 @@ import itertools
 from .utils.methodtools import cached_property, cached_method
 from .utils.algorithm_tarjan import Tarjan
 from .utils.numpy_types import npBoolMatrix, npUInt64Matrix
-from .utils.algorithm_floyd_warshall import floyd_warshall
+from . import utils
+from .utils.algorithm_floyd_warshall import floyd_warshall, transitive_closure
 from .utils.methodtools import implemented_at
+from .base_methods import endomorphisms, validation, identity, graphs, interface, description, graphviz
+
 from . import base_methods as MD
+
 from .base_methods.validation import PosetExceptions
 
 Endomorphism = List[int]
 PartialEndomorphism = Union[List[Optional[int]], List[None], Endomorphism]
 _T = TypeVar('_T')
+
+
+def _copy_as_type(self: Relation, cls: Type[_T], check=False) -> _T:
+    kwargs = self.__dict__.copy()
+    kwargs.pop('leq')
+    kwargs.pop('labels', None)
+    cpy = cls(self.leq, labels=self.labels, check=check, **kwargs)
+    return cpy
+
+
+def _lt_pairs(self: Relation):
+    for i in range(self.n):
+        for j in range(self.n):
+            if self.leq[i, j] and i != j:
+                yield i, j
+    return
 
 
 class Relation:
@@ -30,19 +50,14 @@ class Relation:
     leq: npBoolMatrix
     labels: Optional[Sequence[str]]
 
-    MD = MD
-
-    # validation = validation
-    # graph = graphs
-    # graphviz = graphviz
-    # description = description
+    MD = MD  # Provide access to library methods for all instances
 
     def __init__(self, leq: npBoolMatrix, check: bool,
                  labels: Optional[Sequence[str]] = None, **kwargs):
         self.n = len(leq)
         self.leq = leq
         self.labels = labels
-        MD.validation.validate_matrix_format(self)
+        validation.validate_matrix_format(self)
         for k, v in kwargs.items():
             self.__dict__[k] = v
         if check:
@@ -55,29 +70,27 @@ class Relation:
     @cached_property
     def is_poset(self):
         method = lambda: self.as_poset(check=True)
-        return MD.validation.ValidationError.capture(method)
+        return validation.ValidationError.capture(method)
 
     def as_poset(self, check: bool):
-        return self.copy_as(Poset, check=check)
+        return self.as_type(Poset, check=check)
 
-    def copy(self, check=False):
-        return self.copy_as(self.__class__, check=check)
+    def as_type(self, cls: Type[_T], check=False) -> _T:
+        if isinstance(self, cls):
+            return self
+        return _copy_as_type(self, cls, check=check)
 
-    def copy_as(self, cls: Type[_T], check=False) -> _T:
-        kwargs = self.__dict__.copy()
-        kwargs.pop('leq')
-        kwargs.pop('labels', None)
-        cpy = cls(self.leq, labels=self.labels, check=check, **kwargs)
-        return cpy
-
-    def copy_if(self, cls: Type[_T]) -> Optional[_T]:
+    def try_type(self, cls: Type[_T]) -> Optional[_T]:
         try:
-            return self.copy_as(cls, check=True)
-        except MD.validation.ValidationError:
+            return self.as_type(cls, check=True)
+        except validation.ValidationError:
             return None
 
+    def copy(self, check=False):
+        return _copy_as_type(self, self.__class__, check=check)
+
     def reindex(self, rank: List[int], inverse=False):
-        return MD.identity.reindex(self, rank, inverse=inverse)
+        return identity.reindex(self, rank, inverse=inverse)
 
     @property
     def _labels(self):
@@ -109,29 +122,46 @@ class Relation:
     '''
 
     @classmethod
-    @implemented_at(MD.interface.from_parents)
-    def from_parents(cls, *args, **kwargs):
-        ...
+    def from_parents(cls, parents, labels=None, check=True):
+        'new instance from list: parents[i] = list of parents of i'
+        children = interface.parents_to_children(parents)
+        return cls.from_children(children, labels, check)
 
     @classmethod
-    @implemented_at(MD.interface.from_children)
-    def from_children(cls, *args, **kwargs):
-        ...
+    def from_children(cls, children: List[List[int]], labels=None, check=True):
+        'new instance from list: children[i] = list of covers of i'
+        leq, child, dist = interface.children_to_leq(children)
+        leq.flags.writeable = False
+        dist.flags.writeable = False
+        return cls(leq, check=check, labels=labels, dist=dist, child=child,
+                   children=children)
 
     @classmethod
-    @implemented_at(MD.interface.from_down_edges)
-    def from_down_edges(cls, *args, **kwargse):
-        ...
+    def from_down_edges(cls, n: int, edges: Iterable[Tuple[int, int]],
+                        labels=None, check=True):
+        'new instance of size n respecting all given relations (ancestor, descendant)'
+        up_edges = [(j, i) for i, j in edges]
+        return cls.from_up_edges(n, up_edges, labels, check)
 
     @classmethod
-    @implemented_at(MD.interface.from_up_edges)
-    def from_up_edges(cls, *args, **kwargse):
-        ...
+    def from_up_edges(cls, n: int, edges: Iterable[Tuple[int, int]],
+                      labels=None, check=True):
+        'new instance of size n respecting all given relations (descendant, ancestor)'
+        leq = interface.up_edges_to_leq(n, edges)
+        leq.flags.writeable = False
+        return cls(leq, check=check, labels=labels)
 
     @classmethod
-    @implemented_at(MD.interface.from_lambda)
-    def from_lambda(cls, *args, **kwargs):
-        ...
+    def from_lambda(cls, elems: List[_T], f_leq: Callable[[_T, _T], bool],
+                    labels=None, check=True):
+        'new instance with: leq[i,j] = f_leq(elems[i], elems[j])'
+        m = len(elems)
+        leq = np.zeros((m, m), dtype=bool)
+        for i in range(m):
+            for j in range(m):
+                leq[i, j] = f_leq(elems[i], elems[j])
+        leq.flags.writeable = False
+        return cls(leq, check=check, labels=labels)
 
     # def describe(self):
     #     self.show()
@@ -165,20 +195,8 @@ class Relation:
                     G[i].append(j)
         return Tarjan(G).tarjan()
 
-    def transitive_closure(self):
-        dist = floyd_warshall(self.leq, infinity=self.n)
-        rel = (dist < len(dist))
-        rel.flags.writeable = False
-        return self.__class__(rel, check=False)
-
-    def __lt_pairs(self):
-        for i in range(self.n):
-            for j in range(self.n):
-                if self.leq[i, j] and i != j:
-                    yield i, j
-
     def f_is_monotone(self, f: Endomorphism):
-        for i, j in self.__lt_pairs():
+        for i, j in _lt_pairs(self):
             if not self.leq[f[i], f[j]]:
                 return False
         return True
@@ -203,11 +221,14 @@ class Poset(Relation):
 
     def validate(self):
         super().validate()
-        MD.validation.assert_is_poset(self)
+        validation.assert_is_poset(self)
+
+    def as_lattice(self, check: bool):
+        return self.as_type(Lattice, check=check)
 
     @cached_property
     def is_lattice(self):
-        return self.copy_if(Lattice) is not None
+        return self.try_type(Lattice) is not None
 
     '''
     @section
@@ -220,35 +241,29 @@ class Poset(Relation):
     @cached_property
     def hash(self):
         'hash number for this poset'
-        return MD.identity.hasher(sorted(self.hash_elems))
+        return identity.hasher(sorted(self.hash_elems))
 
     @cached_property
     def hash_elems(self):
         'hash for each element of the poset w.r.t. the poset order'
-        return MD.identity._hash_elems(self, rounds=2, salt=0)
+        return identity._hash_elems(self, rounds=2, salt=0)
 
     def __eq__(self, other: Poset):
         'Equality up to isomorphism, i.e. up to reindexing'
-        return MD.identity.find_isomorphism(self, other) is not None
+        return identity.find_isomorphism(self, other) is not None
 
     @cached_property
     def hash(self):
         'hash number for this poset'
-        return MD.identity.hasher(sorted(self.hash_elems))
+        return identity.hasher(sorted(self.hash_elems))
 
     @cached_property
     def canonical(self):
-        rank = MD.identity.canonical_rank(self)
+        rank = identity.canonical_rank(self)
         P = self.reindex(rank)
         P.labels = None
         return P
 
-    # __graph = methods_directory.GraphMethods
-    # __testing = methods_directory.TestingMethods
-    # __generation = methods_directory.GenerationMethods
-    # __endomorphism = methods_directory.EndomorphismMethods
-    # __initialization = methods_directory.InitializationMethods
-    # __binary_operator = methods_directory.BinaryOperatorMethods
     '''
     @section
         Fundamental properties
@@ -260,7 +275,7 @@ class Poset(Relation):
         nxn boolean matrix: transitive reduction of the poset.
         child[i,j] == True iff j covers i (with no elements inbetween)
         '''
-        child = MD.graphs.transitive_reduction(self.leq)
+        child = graphs.transitive_reduction(self.leq)
         child.flags.writeable = False
         return child
 
@@ -284,14 +299,14 @@ class Poset(Relation):
         Matrix of shortest distance from i upwards to j through parents
         n represents infinity.
         '''
-        return MD.graphs.child_to_dist(self.child, assume_poset=True)
+        return interface.child_to_dist(self.child)
 
     '''
     @section
         Display methods
     '''
 
-    @implemented_at(MD.graphviz.show)
+    @implemented_at(graphviz.show)
     def show(self):
         ...
 
@@ -300,7 +315,7 @@ class Poset(Relation):
 
     @cached_property
     def name(self):
-        return MD.description.name(self)
+        return description.name(self)
 
     @cached_property
     def upside_down(self):
@@ -311,30 +326,30 @@ class Poset(Relation):
 
     @cached_property
     def toposort_bottom_up(self):
-        return MD.graphs.toposort_bottom_up(self)
+        return graphs.toposort_bottom_up(self)
 
     @cached_property
     def bottoms(self):
-        return MD.graphs.bottoms(self)
+        return graphs.bottoms(self)
 
     @cached_property
     def tops(self):
-        return MD.graphs.tops(self)
+        return graphs.tops(self)
 
 
 class Lattice(Poset):
 
     def validate(self):
         super().validate()
-        MD.validation.assert_is_lattice(self)
+        validation.assert_is_lattice(self)
 
     @cached_property
     def is_distributive(self):
-        return self.copy_if(DistributiveLattice) is not None
+        return self.try_type(DistributiveLattice) is not None
 
     @cached_property
     def is_modular(self):
-        return self.copy_if(ModularLattice) is not None
+        return self.try_type(ModularLattice) is not None
 
     @cached_property
     def lub(self):
@@ -359,14 +374,14 @@ class Lattice(Poset):
     @cached_property
     def bottom(self):
         'unique bottom element of the Poset. Throws if not present'
-        bottoms = MD.graphs.bottoms(self)
-        return MD.validation.expect_unique_bottom(bottoms)
+        bottoms = graphs.bottoms(self)
+        return validation.expect_unique_bottom(bottoms)
 
     @cached_property
     def top(self):
         'unique top element of the Poset. Throws if not present'
-        tops = MD.graphs.tops(self)
-        return MD.validation.expect_unique_top(tops)
+        tops = graphs.tops(self)
+        return validation.expect_unique_top(tops)
 
     @cached_property
     def irreducibles(self):
@@ -385,20 +400,19 @@ class Lattice(Poset):
     @cached_property
     def irreducible_components(self: Lattice):
         '''
-        components of join irreducibles in toposort order and children
+        Components of join irreducibles in toposort order and children
         lists for each component
         '''
         n = self.n
         if n <= 1:  # no join irreducibles at all
             return (0, [], [])
-        graphs = self.MD.graphs
         irr = self.irreducibles
         sub = graphs.subgraph(self, irr)
         subcomps = graphs.independent_components(sub)
         m = len(subcomps)
         irrcomps = [[irr[j] for j in subcomps[i]] for i in range(m)]
-        m_topo, m_children = zip(*(
-            MD.graphs._toposort_children(self, irrcomps[i]) for i in range(m)))
+        m_topo, m_children = zip(
+            *(graphs._toposort_children(self, irrcomps[i]) for i in range(m)))
         m_topo = cast(Tuple[List[int]], m_topo)
         m_children = cast(Tuple[List[List[int]]], m_children)
         return m, m_topo, m_children
@@ -417,56 +431,24 @@ class Lattice(Poset):
             initial=self.top,
         )
 
+    @implemented_at(endomorphisms.f_lub)
+    def f_lub(self, *args, **kwargs):
+        ...
+
+    @implemented_at(endomorphisms.f_glb)
+    def f_glb(self, *args, **kwargs):
+        ...
+
 
 class DistributiveLattice(Lattice):
 
     def validate(self):
         super().validate()
-        MD.validation.assert_is_distributive(self)
+        validation.assert_is_distributive(self)
 
 
 class ModularLattice(Lattice):
 
     def validate(self):
         super().validate()
-        MD.validation.assert_is_modular(self)
-
-    # def f_preserves_lub(self, f: Endomorphism):
-    #     return all(f[self.lub[i, j]] == self.lub[f[i], f[j]]
-    #                for i in range(self.n)
-    #                for j in range(self.n))
-
-    # def f_lub(self, f: Endomorphism, g: Endomorphism) -> Endomorphism:
-    #     return [self.lub[f[i], g[i]] for i in range(self.n)]
-
-    # def f_glb_pointwise(self, f: Endomorphism, g: Endomorphism) -> Endomorphism:
-    #     return [self.glb[f[i], g[i]] for i in range(self.n)]
-
-    # def f_glb(self, f: Endomorphism, g: Endomorphism) -> Endomorphism:
-    #     return self.f_preserving_lub(self.f_glb_pointwise(f, g))
-
-    # def f_preserving_lub(self, f: Endomorphism,
-    #                      budget: Optional[int] = None) -> Endomorphism:
-    #     '''
-    #     The famous algorithm that fixes iteratively the pairs of
-    #     elements in the lattice that fail to satisfy the LUB axiom
-    #     '''
-    #     lub = self.lub
-    #     leq = self.leq
-    #     it = itertools.count() if budget is None else range(budget)
-    #     for _ in it:
-    #         f_prev = f.copy()
-    #         for i in range(self.n):
-    #             for j in range(self.n):
-    #                 k = lub[i, j]
-    #                 fi_lub_fj = lub[f[i], f[j]]
-    #                 if fi_lub_fj == f[k]:
-    #                     pass
-    #                 elif leq[f[k], fi_lub_fj]:
-    #                     f[k] = fi_lub_fj
-    #                 else:
-    #                     f[i] = lub[f[i], f[k]]
-    #                     f[j] = lub[f[j], f[k]]
-    #         if f == f_prev:
-    #             break
-    #     return f
+        validation.assert_is_modular(self)
