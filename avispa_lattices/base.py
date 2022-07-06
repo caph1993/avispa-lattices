@@ -122,7 +122,7 @@ class Relation:
     '''
 
     @classmethod
-    def from_parents(cls, parents, labels=None, check=True):
+    def from_parents(cls, parents: List[List[int]], labels=None, check=True):
         'new instance from list: parents[i] = list of parents of i'
         children = interface.parents_to_children(parents)
         return cls.from_children(children, labels, check)
@@ -345,11 +345,19 @@ class Lattice(Poset):
 
     @cached_property
     def is_distributive(self):
-        return self.try_type(DistributiveLattice) is not None
+        try:
+            validation.assert_is_lattice(self)
+        except validation.ValidationError:
+            return False
+        return True
 
     @cached_property
     def is_modular(self):
-        return self.try_type(ModularLattice) is not None
+        try:
+            validation.assert_is_modular(self)
+        except validation.ValidationError:
+            return False
+        return True
 
     @cached_property
     def lub(self):
@@ -419,16 +427,16 @@ class Lattice(Poset):
 
     def lub_of_many(self, elems: Iterable[int]) -> int:
         return functools.reduce(
-            function=lambda i, j: self.lub[i, j],
-            sequence=elems,
-            initial=self.bottom,
+            lambda i, j: self.lub[i, j],
+            elems,
+            self.bottom,
         )
 
     def glb_of_many(self, elems: Iterable[int]) -> int:
         return functools.reduce(
-            function=lambda i, j: self.glb[i, j],
-            sequence=elems,
-            initial=self.top,
+            lambda i, j: self.glb[i, j],
+            elems,
+            self.top,
         )
 
     @implemented_at(endomorphisms.f_lub)
@@ -438,17 +446,3 @@ class Lattice(Poset):
     @implemented_at(endomorphisms.f_glb)
     def f_glb(self, *args, **kwargs):
         ...
-
-
-class DistributiveLattice(Lattice):
-
-    def validate(self):
-        super().validate()
-        validation.assert_is_distributive(self)
-
-
-class ModularLattice(Lattice):
-
-    def validate(self):
-        super().validate()
-        validation.assert_is_modular(self)

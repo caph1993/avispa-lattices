@@ -6,7 +6,7 @@ from collections import deque
 import typing
 
 if TYPE_CHECKING:
-    from ..base import Lattice, Poset, Relation, Endomorphism, PartialEndomorphism, DistributiveLattice
+    from ..base import Lattice, Poset, Relation, Endomorphism, PartialEndomorphism
 
 
 def f_lub(self, *functions: Endomorphism) -> Endomorphism:
@@ -14,7 +14,7 @@ def f_lub(self, *functions: Endomorphism) -> Endomorphism:
     return f_lub_pointwise(self, functions)
 
 
-_T_GLB_methods = Literal['auto', 'pointwise', 'Gmeet', 'GMeet+', 'DMeet+',
+_T_GLB_methods = Literal['auto', 'pointwise', 'GMeet', 'GMeet+', 'DMeet+',
                          'JMeet', 'CMeet',]
 GLB_methods: Tuple[str] = typing.get_args(_T_GLB_methods)
 
@@ -36,8 +36,6 @@ def f_glb(L: Lattice, *functions: Endomorphism, method='auto') -> Endomorphism:
     elif method == 'GMeet+':
         raise NotImplementedError
     elif method == 'DMeet+':
-        L = cast(DistributiveLattice, L)
-        #L = L.as_type(DistributiveLattice)
         return f_glb_DMeet_plus(L, functions)
     else:
         raise NotImplementedError(f'"{method}" not in {GLB_methods}')
@@ -127,7 +125,7 @@ def fix_f_naive(L: Lattice, f: Endomorphism,
     return f
 
 
-def f_glb_DMeet_plus(L: DistributiveLattice,
+def f_glb_DMeet_plus(L: Lattice,
                      functions: Sequence[Endomorphism]) -> Endomorphism:
     """
     Greatest lower bound of a set of lub-functions in O(n*m).
@@ -170,5 +168,4 @@ def f_glb_DMeet_plus(L: DistributiveLattice,
             work.append(x)
         else:
             h[x] = L.lub[h[i], h[j]]
-    h = cast(Endomorphism, h)
-    return h
+    return h  # type:ignore

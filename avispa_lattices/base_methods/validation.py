@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Callable, List
 import itertools
 
 if TYPE_CHECKING:
-    from ..base import Lattice, Poset, Relation, DistributiveLattice, ModularLattice
+    from ..base import Lattice, Poset, Relation
 
 import numpy as np
 
@@ -198,7 +198,7 @@ class NotDistributive(ValidationError):
     _message = 'Given lattice is not distributive'
 
 
-def assert_is_distributive(self: DistributiveLattice):
+def assert_is_distributive(self: Lattice):
     'Find i, j, k that violate distributivity. None otherwise'
     n = self.n
     lub = self.lub
@@ -219,18 +219,18 @@ class NotModular(ValidationError):
     _message = 'Given lattice is not distributive'
 
 
-def assert_is_modular(self: ModularLattice):
+def assert_is_modular(self: Lattice):
     'Find i, j, k that violate modularity. None otherwise'
     n = self.n
     leq = self.leq
     lub = self.lub
     glb = self.glb
     for i, j, k in itertools.product(range(n), repeat=3):
-        if leq[i, j] and glb[i, lub[k, j]] != lub[glb[i, k], j]:
+        if leq[i, k] and lub[i, glb[j, k]] != glb[lub[i, j], k]:
             msg = (f'Non modular lattice:\n'
-                   f'{i} glb ({k} lub {j}) = {i} glb {lub[k,j]} = '
-                   f'{glb[i,lub[k,j]]} != {lub[glb[i,k],j]} = '
-                   f'{glb[i,k]} lub {j} = ({i} glb {k}) lub {j})')
+                   f'{i} lub ({j} glb {k})  =  {i} lub {glb[j,k]}  =  '
+                   f'{lub[i,glb[j,k]]}  !=  {glb[lub[i,j],k]}  =  '
+                   f'{lub[i,j]} glb {k}  =  (({i} lub {j}) glb {k})')
             raise NotModular(msg)
     return
 
