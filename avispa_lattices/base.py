@@ -2,13 +2,15 @@ from __future__ import annotations
 import functools
 from typing import Any, Callable, Generic, Iterable, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, cast, overload
 import numpy as np
+
+from . import functional
 from .utils.methodtools import cached_property, cached_method
 from .utils.algorithm_tarjan import Tarjan
 from .utils.numpy_types import npBoolMatrix, npUInt64Matrix
 from . import utils
 from .utils.algorithm_floyd_warshall import floyd_warshall, transitive_closure
 from .utils.methodtools import implemented_at
-from .base_methods import endomorphisms, validation, identity, graphs, interface, description, graphviz
+from .base_methods import validation, identity, graphs, interface, description, graphviz
 
 from . import base_methods as MD
 
@@ -436,14 +438,14 @@ class Lattice(Poset):
             self.top,
         )
 
-    @implemented_at(endomorphisms.f_lub)
+    @implemented_at(functional.f_lub)
     def f_lub(self, *args, **kwargs):
         ...
 
-    @implemented_at(endomorphisms.f_glb)
+    @implemented_at(functional.f_glb)
     def f_glb(self, *args, **kwargs):
         ...
 
-    @implemented_at(endomorphisms.f_iter)
+    @implemented_at(functional.f_iter)
     def f_iter(self, *args, **kwargs):
         ...

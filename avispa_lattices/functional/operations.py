@@ -6,7 +6,8 @@ from collections import deque
 import typing
 from .._version import version_is_at_least
 if TYPE_CHECKING:
-    from ..base import Lattice, Poset, Relation, Endomorphism, PartialEndomorphism
+    from ..base import Lattice, Poset, Relation
+    from ._types import Endomorphism, PartialEndomorphism
 
 
 def f_lub(self, *functions: Endomorphism) -> Endomorphism:
@@ -174,18 +175,21 @@ def f_glb_DMeet_plus(L: Lattice,
     return h  # type:ignore
 
 
-_f_iter_method = Literal['auto', 'all', 'lub_preserving']
-_f_iter_methods: Tuple[str] = typing.get_args(_f_iter_method)
+# def _as_external_lattice(self: Lattice):
+#     '''
+#     returns the equivalent "Lattice" object for self
+#     to be able to run methods from external_methods
+#     '''
+#     mat = external_methods.lattice_from_covers(self.children)
+#     return external_methods.Lattice(mat)
 
-
-def f_iter(L: Lattice, *functions: Endomorphism,
-           method: _f_iter_method = 'auto'):
-    '''
-    Greatest lower bound of a set of functions.
-    '''
-    if False:
-        h: Endomorphism = []
-        yield h
-    raise NotImplementedError("Sorry")
-    raise NotImplementedError(f'"{method}" not in {_f_glb_methods}')
-    return
+# def f_meet(self: Lattice, f1: Sequence[int], f2: Sequence[int]):
+#     '''
+#     Compute the greatest lower bound of two functions
+#     in the space of join endomorphisms.
+#     '''
+#     return external_methods.delta_foo_cvrs(
+#         _as_external_lattice(self),
+#         [f1, f2],
+#         self.children,
+#     )

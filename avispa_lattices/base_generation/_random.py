@@ -7,10 +7,25 @@ from .._version import version_is_at_least
 from ..utils.algorithm_floyd_warshall import transitive_closure
 from ..utils import algorithm_random_poset_czech
 from ..utils.random_state import random_state
-from ..base import Lattice, Poset, Endomorphism
+from ..base import Lattice, Poset
+from ..functional._types import Endomorphism
+from ..functional.operations import fix_f_naive
+
+_random_poset_method = Literal['auto', 'p_threshold']
+_random_poset_methods: Tuple[str] = typing.get_args(_random_poset_method)
 
 
-def random_poset(n: int, p: float, seed: Optional[int] = None):
+def random_poset(n: int, seed: Optional[int] = None,
+                 method: _random_poset_method = 'auto', **kwargs):
+    if method == 'auto':
+        method = 'p_threshold'
+
+    if method == 'p_threshold':
+        return random_poset_p(n, seed=seed, **kwargs)
+    raise NotImplementedError(f'{method} not in {_random_lattice_methods}')
+
+
+def random_poset_p(n: int, p: float, seed: Optional[int] = None):
     '''
     Generates a random poset.
     All posets (modulo labels) have positive probability of being generated.
@@ -48,21 +63,21 @@ def random_lattice_czech(n: int, seed: Optional[int] = None):
     return L
 
 
-_random_lattice_mode = Literal['auto', 'Czech']
-_random_lattice_modes: Tuple[str] = typing.get_args(_random_lattice_mode)
+_random_lattice_method = Literal['auto', 'Czech']
+_random_lattice_methods: Tuple[str] = typing.get_args(_random_lattice_method)
 
 
 def random_lattice(n: int, seed: Optional[int] = None,
-                   mode: _random_lattice_mode = 'auto', **kwargs):
-    if mode == 'auto':
+                   method: _random_lattice_method = 'auto', **kwargs):
+    if method == 'auto':
         if version_is_at_least('3.0.6'):
-            mode = 'Czech'
+            method = 'Czech'
         else:
-            mode = 'Czech'
+            method = 'Czech'
 
-    if mode == 'Czech':
+    if method == 'Czech':
         return random_lattice_czech(n, seed, **kwargs)
-    raise NotImplementedError(f'{mode} not in {_random_lattice_modes}')
+    raise NotImplementedError(f'{method} not in {_random_lattice_methods}')
 
 
 def random_f_monotone_A(L: Lattice, seed=None,
@@ -127,4 +142,4 @@ def _random_f_preserving_lub(L: Lattice, seed: Optional[int] = None):
     I = np.array(L.irreducibles)
     for i, fi in zip(I, R.choice(elems, len(I), p=p_above)):
         f[i] = fi
-    return L.MD.endomorphisms.fix_f_naive(L, f)
+    return fix_f_naive(L, f)

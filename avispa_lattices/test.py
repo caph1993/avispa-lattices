@@ -54,14 +54,21 @@ def test_generation_and_f_iteration():
     return
 
 
-def test_f_glb_():
+def test_f_glb():
     R = np.random.RandomState(123976)
-    L = AL.random_lattice(8, seed=R.randint(0, 2**32), mode='Czech')
+    #P = AL.random_poset
+    L = AL.random_lattice(5, seed=R.randint(0, 2**32), mode='Czech')
+    L.show()
+    print(L.is_distributive)
+    # for f in L.f_iter(method='monotones'):
+    #     print(f)
     for f in L.f_iter():
-        pass
+        print(f)
+        print('HEY')
     return
 
 
+test_f_glb()
 test_generation_and_f_iteration()
 test_M3()
 test_M5()
