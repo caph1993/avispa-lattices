@@ -4,7 +4,7 @@ import itertools
 from typing import TYPE_CHECKING, Callable, Iterable, List, Literal, Optional, Sequence, Tuple, Union, cast
 from collections import deque
 import typing
-
+from .._version import version_is_at_least
 if TYPE_CHECKING:
     from ..base import Lattice, Poset, Relation, Endomorphism, PartialEndomorphism
 
@@ -14,12 +14,13 @@ def f_lub(self, *functions: Endomorphism) -> Endomorphism:
     return f_lub_pointwise(self, functions)
 
 
-_T_GLB_methods = Literal['auto', 'pointwise', 'GMeet', 'GMeet+', 'DMeet+',
-                         'JMeet', 'CMeet',]
-GLB_methods: Tuple[str] = typing.get_args(_T_GLB_methods)
+_f_glb_method = Literal['auto', 'pointwise', 'GMeet', 'GMeet+', 'DMeet+',
+                        'JMeet', 'CMeet',]
+_f_glb_methods: Tuple[str] = typing.get_args(_f_glb_method)
 
 
-def f_glb(L: Lattice, *functions: Endomorphism, method='auto') -> Endomorphism:
+def f_glb(L: Lattice, *functions: Endomorphism,
+          method: _f_glb_method = 'auto') -> Endomorphism:
     '''
     Greatest lower bound of a set of functions.
     '''
@@ -27,8 +28,10 @@ def f_glb(L: Lattice, *functions: Endomorphism, method='auto') -> Endomorphism:
         if L.is_distributive:
             method = 'DMeet+'
         else:
-            method = 'GMeet+'
-    assert method in GLB_methods, f'"{method}" not in {GLB_methods}'
+            if version_is_at_least('3.1.0'):
+                method = 'GMeet+'
+            else:
+                method = 'GMeet'
     if method == 'pointwise':
         return f_glb_pointwise(L, functions)
     elif method == 'GMeet':
@@ -38,7 +41,7 @@ def f_glb(L: Lattice, *functions: Endomorphism, method='auto') -> Endomorphism:
     elif method == 'DMeet+':
         return f_glb_DMeet_plus(L, functions)
     else:
-        raise NotImplementedError(f'"{method}" not in {GLB_methods}')
+        raise NotImplementedError(f'"{method}" not in {_f_glb_methods}')
 
 
 def f_glb_pointwise(L: Lattice,
@@ -169,3 +172,20 @@ def f_glb_DMeet_plus(L: Lattice,
         else:
             h[x] = L.lub[h[i], h[j]]
     return h  # type:ignore
+
+
+_f_iter_method = Literal['auto', 'all', 'lub_preserving']
+_f_iter_methods: Tuple[str] = typing.get_args(_f_iter_method)
+
+
+def f_iter(L: Lattice, *functions: Endomorphism,
+           method: _f_iter_method = 'auto'):
+    '''
+    Greatest lower bound of a set of functions.
+    '''
+    if False:
+        h: Endomorphism = []
+        yield h
+    raise NotImplementedError("Sorry")
+    raise NotImplementedError(f'"{method}" not in {_f_glb_methods}')
+    return

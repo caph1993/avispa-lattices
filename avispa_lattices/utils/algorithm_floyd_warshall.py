@@ -16,5 +16,5 @@ def floyd_warshall(adj: npBoolMatrix, infinity: int) -> npUInt64Matrix:
 def transitive_closure(leq: npBoolMatrix):
     n = len(leq)
     dist = floyd_warshall(leq, infinity=n)
-    rel: npBoolMatrix = (dist < len(dist))
+    rel: npBoolMatrix = (dist < n)
     return rel

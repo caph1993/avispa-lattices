@@ -2,7 +2,6 @@ from __future__ import annotations
 import functools
 from typing import Any, Callable, Generic, Iterable, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, cast, overload
 import numpy as np
-import itertools
 from .utils.methodtools import cached_property, cached_method
 from .utils.algorithm_tarjan import Tarjan
 from .utils.numpy_types import npBoolMatrix, npUInt64Matrix
@@ -69,7 +68,7 @@ class Relation:
 
     @cached_property
     def is_poset(self):
-        method = lambda: self.as_poset(check=True)
+        method = lambda: self.as_poset(check=True) and None
         return validation.ValidationError.capture(method)
 
     def as_poset(self, check: bool):
@@ -163,14 +162,14 @@ class Relation:
         leq.flags.writeable = False
         return cls(leq, check=check, labels=labels)
 
-    # def describe(self):
-    #     self.show()
-    #     print('Relation matrix:')
-    #     print(self.leq.astype(int))
-    #     print('Reflexive?', self.is_reflexive)
-    #     print('Antisymmetric?', self.is_antisymmetric)
-    #     print('Transitive?', self.is_transitive)
-    #     return
+    def _description(self):
+        out = '\n'.join([
+            f'Relation matrix:\n{self.leq.astype(int)}',
+            f'Reflexive? {validation.is_reflexive(self),}',
+            f'Antisymmetric? {validation.is_antisymmetric(self),}',
+            f'Transitive? {validation.is_transitive(self),}',
+        ])
+        return out
 
     # def show(self, labels=None, save=None):
     #     'Display the relation using graphviz. Groups SCCs together'
@@ -346,7 +345,7 @@ class Lattice(Poset):
     @cached_property
     def is_distributive(self):
         try:
-            validation.assert_is_lattice(self)
+            validation.assert_is_distributive(self)
         except validation.ValidationError:
             return False
         return True
@@ -382,14 +381,12 @@ class Lattice(Poset):
     @cached_property
     def bottom(self):
         'unique bottom element of the Poset. Throws if not present'
-        bottoms = graphs.bottoms(self)
-        return validation.expect_unique_bottom(bottoms)
+        return validation.expect_unique_bottom(self)
 
     @cached_property
     def top(self):
         'unique top element of the Poset. Throws if not present'
-        tops = graphs.tops(self)
-        return validation.expect_unique_top(tops)
+        return validation.expect_unique_top(self)
 
     @cached_property
     def irreducibles(self):
@@ -445,4 +442,8 @@ class Lattice(Poset):
 
     @implemented_at(endomorphisms.f_glb)
     def f_glb(self, *args, **kwargs):
+        ...
+
+    @implemented_at(endomorphisms.f_iter)
+    def f_iter(self, *args, **kwargs):
         ...

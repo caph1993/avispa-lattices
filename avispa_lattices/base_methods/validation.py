@@ -1,29 +1,53 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Callable, List
+from typing import TYPE_CHECKING, Callable, List, Optional, TypeVar, overload
 import itertools
 
 if TYPE_CHECKING:
     from ..base import Lattice, Poset, Relation
 
+from .. import flags
 import numpy as np
+
+_T = TypeVar('_T')
 
 
 class ValidationError(AssertionError):
 
     _message = 'Validation failed'
 
-    @classmethod
-    def assert_false(cls, why_false: str):
-        if why_false:
-            raise cls(why_false)
+    def __init__(self, X: Relation, why_false: str):
+        super().__init__(X, why_false)
+        assert self.args == (X, why_false)
+
+    def __str__(self):
+        X: Relation
+        why_false: str
+        X, why_false = self.args
+        if hasattr(X, 'show'):
+            X.show()  # type:ignore
+        return f'{X._description()}\n\nISSUE: {self._message}\n\nRaised because:\n{why_false}'
 
     @classmethod
-    def capture(cls, method: Callable):
+    def assert_false(cls, X: Relation, why_false: str):
+        if why_false:
+            raise cls(X, why_false)
+
+    @classmethod
+    def capture(cls, method: Callable[..., None]) -> bool:
         try:
             method()
         except ValidationError:
             return False
-        return True
+        else:
+            return True
+
+    # @classmethod
+    # def capture_output(cls, method: Callable[..., _T]) -> Optional[_T]:
+    #     try:
+    #         obj = method()
+    #     except ValidationError:
+    #         obj = None
+    #     return obj
 
 
 # Not poset
@@ -46,7 +70,7 @@ def validate_matrix_format(R: Relation):
             ', squared and read-only (i.e. rel.flags.writeable = False).',
             f'\n{e}'
         ])
-        raise MatrixFormatError(message)
+        raise MatrixFormatError(R, message)
     R.n = rel.shape[0]
     R.leq = rel
     return
@@ -74,7 +98,7 @@ def assert_is_reflexive(R: Relation):
     rel = R.leq
     I, = np.where(~rel[np.diag_indices_from(rel)])
     why = I.size and f'Not reflexive: rel[{I[0]},{I[0]}] is False'
-    NotReflexive.assert_false(why)
+    NotReflexive.assert_false(R, why)
 
 
 def assert_is_antisymmetric(R: Relation):
@@ -82,7 +106,7 @@ def assert_is_antisymmetric(R: Relation):
     eye = np.identity(R.n, dtype=np.bool_)
     I, J = np.where(rel & rel.T & ~eye)
     why = I.size and f'Not antisymmetric: cycle {I[0]}<={I[1]}<={I[0]}'
-    NotAntisymmetric.assert_false(why)
+    NotAntisymmetric.assert_false(R, why)
 
 
 def assert_is_transitive(R: Relation):
@@ -91,7 +115,7 @@ def assert_is_transitive(R: Relation):
     I, J = np.where(((~rel) & rel2))
     why = I.size and (
         f'Not transitive: rel[{I[0]},{J[0]}] is False but there is a path')
-    NotTransitive.assert_false(why)
+    NotTransitive.assert_false(R, why)
 
 
 def is_reflexive(R: Relation):
@@ -161,7 +185,7 @@ def assert_is_lattice(L: Lattice):
             assert leq[x, glb], f'Not a lattice: {i} glb {j} => {glb} or {x}'
         assert False, 'Unkown reason'
     except AssertionError as e:
-        raise NotLattice(e)
+        raise NotLattice(L, e.args[0])
 
 
 class NotComplete(NotLattice):  # Because all finite lattices are complete
@@ -176,22 +200,16 @@ class NotUniqueTop(NotComplete):
     _message = 'Given poset has multiple top elements'
 
 
-def expect_unique_bottom(bottoms: List[int]):
-    if not bottoms:
-        raise NoBottoms()
-    if len(bottoms) > 1:
-        hook = lambda: f'Multiple bottoms found: {bottoms}'
-        raise NotUniqueBottom(hook)
-    return bottoms[0]
+def expect_unique_bottom(P: Poset):
+    if not P.bottoms or len(P.bottoms) > 1:
+        raise NotUniqueBottom(P, f'Bottoms found: {P.bottoms}')
+    return P.bottoms[0]
 
 
-def expect_unique_top(tops: List[int]):
-    if not tops:
-        raise NoTops()
-    if len(tops) > 1:
-        hook = lambda: f'Multiple tops found: {tops}'
-        raise NotUniqueTop(hook)
-    return tops[0]
+def expect_unique_top(P: Poset):
+    if not P.tops or len(P.tops) > 1:
+        raise NotUniqueBottom(P, f'Tops found: {P.tops}')
+    return P.tops[0]
 
 
 class NotDistributive(ValidationError):
@@ -208,7 +226,7 @@ def assert_is_distributive(self: Lattice):
         if diff.any():
             j, k = next(zip(*np.where(diff)))  # type:ignore
             raise NotDistributive(
-                f'Non distributive lattice:\n'
+                self, f'Non distributive lattice:\n'
                 f'{i} glb ({j} lub {k}) = {i} glb {lub[j,k]} = '
                 f'{glb[i,lub[j,k]]} != {lub[glb[i,j],glb[i,k]]} = '
                 f'{glb[i,j]} lub {glb[i,k]} = ({i} glb {j}) lub ({i} glb {k})')
@@ -231,7 +249,7 @@ def assert_is_modular(self: Lattice):
                    f'{i} lub ({j} glb {k})  =  {i} lub {glb[j,k]}  =  '
                    f'{lub[i,glb[j,k]]}  !=  {glb[lub[i,j],k]}  =  '
                    f'{lub[i,j]} glb {k}  =  (({i} lub {j}) glb {k})')
-            raise NotModular(msg)
+            raise NotModular(self, msg)
     return
 
 

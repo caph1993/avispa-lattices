@@ -1,6 +1,10 @@
-import local_avispa_lattices as AL
+from . import AL
 import timeit
 import numpy as np
+'''
+Run from parent folder with:
+python3 -m avispa_lattices.test
+'''
 
 
 def test_M3():
@@ -40,24 +44,26 @@ def test_generation_until_7():
 
 
 def test_generation_and_f_iteration():
-
-    lat_list = list(AL.all_latices(7))
-    assert len(lat_list) == 79
-
-    np.random.seed(0)
-    seeds = np.random.randint(0, 2**32, size=len(lat_list))
-    lat_list += [AL.random_lattice(20, seed=s, mode='Czech') for s in seeds]
-
+    R = np.random.RandomState(12382332)
+    seeds = R.randint(0, 2**32, size=100)
+    lat_list = [AL.random_lattice(20, seed=s, mode='Czech') for s in seeds]
     for L in lat_list:
         assert L.is_poset
         assert L.is_lattice
-
         pass
     return
 
 
+def test_f_glb_():
+    R = np.random.RandomState(123976)
+    L = AL.random_lattice(8, seed=R.randint(0, 2**32), mode='Czech')
+    for f in L.f_iter():
+        pass
+    return
+
+
+test_generation_and_f_iteration()
 test_M3()
 test_M5()
 test_generation_until_7()
-test_generation_and_f_iteration()
 #assert 2 < timeit.timeit(lambda: test_generation_until_7(), number=3) < 5
