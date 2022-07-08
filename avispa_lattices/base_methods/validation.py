@@ -5,7 +5,6 @@ import itertools
 if TYPE_CHECKING:
     from ..base import Lattice, Poset, Relation
 
-from .. import flags
 import numpy as np
 
 _T = TypeVar('_T')

@@ -9,7 +9,7 @@ from .functional import f_lub, f_glb, f_iter
 
 # Modules
 from . import functional
-from .base_methods import validation
+from .base_methods import validation, graphviz
 from .base_generation import random, exhaustive
 
 # from typing import TYPE_CHECKING, Iterable, Callable, List, Optional, Union, cast

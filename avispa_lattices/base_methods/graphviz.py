@@ -1,5 +1,8 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Dict, List, Optional
+import itertools
+from typing import TYPE_CHECKING, Dict, List, Optional, cast
+
+from ..functional._types import PartialEndomorphism
 if TYPE_CHECKING:
     from ..base import Lattice, Poset, Relation
 from typing import Sequence, Tuple
@@ -9,7 +12,7 @@ def graphviz(
     n: int,
     edges: Sequence[Tuple[int, int]],
     labels: Sequence[str],
-    extra_edges: Optional[Dict[str, List[Tuple[int, int]]]] = None,
+    extra_edges: List[Tuple[str, List[Tuple[int, int]]]] = [],
     save: Optional[str] = None,
 ):
     'Show graph using graphviz. blue edges are extra edges'
@@ -36,15 +39,14 @@ def graphviz(
         }
         g.add_edge(Edge(i, j, **style))
 
-    if extra_edges is not None:
-        for color, color_edges in extra_edges.items():
-            for i, j in color_edges:
-                style = {
-                    'color': color,
-                    'constraint': 'false',
-                    'arrowsize': 0.65,
-                }
-                g.add_edge(Edge(i, j, **style))
+    for color, color_edges in extra_edges:
+        style = {
+            'color': color,
+            'constraint': 'false',
+            'arrowsize': 0.65,
+        }
+        for i, j in color_edges:
+            g.add_edge(Edge(i, j, **style))
 
     png = g.create_png()  # type:ignore
 
@@ -66,17 +68,15 @@ def graphviz(
     return
 
 
-def show(
-    P: Poset,
-    f=None,
-    method='auto',
-    labels=None,
-    save=None,
-):
+COLORS_CYCLE = ['darkgreen', 'darkblue', 'darkred', 'darkorange', 'darkviolet']
+
+
+def show(P: Poset, *functions: PartialEndomorphism, method='auto', labels=None,
+         save=None):
     '''
     Use graphviz to display or save P as a Hasse diagram.
     The argument "method" (string) only affects visualization
-    of the endomorphism f (if given). It can be
+    of the endomorphisms [f1, f2, ...] (if given). It can be
         - arrows: blue arrow from each node i to f[i]
         - labels: replace the label i of each node with f[i]
         - labels_bottom: (no label at i if f[i]=bottom)
@@ -88,29 +88,32 @@ def show(
     assert method in methods, f'Unknown method "{method}"'
 
     L = P.as_lattice(check=False)
-    if method == 'auto' and f is not None:
+    if method == 'auto' and functions:
         method = 'arrows'
     n = P.n
     child = P.child
-    extra: List[Tuple[int, int]] = []
+    extra_edges = []
+    enabled = not method.endswith('_bottom')
+    ok = lambda fi: enabled or fi != L.bottom
+    f_edges = lambda f: [(i, int(f[i]))
+                         for i in range(n)
+                         if f[i] != None and ok(f[i])]
     if labels is None:
         labels = P._labels
-    if f is not None:
-        enabled = not method.endswith('_bottom')
-        ok = lambda fi: enabled or fi != L.bottom
-        if method.startswith('arrows'):
-            extra = [(i, int(f[i])) for i in range(n) if ok(f[i])]
-        else:
-            gr = [[] for _ in range(n)]
-            for i in range(n):
-                if ok(f[i]):
-                    gr[f[i]].append(i)
-            labels = [','.join(map(str, l)) for l in gr]
 
-    if extra and L.is_lattice:  # and f is not None and L.f_preserves_lub(f):
-        extra_edges = {'darkgreen': extra}
-    else:
-        extra_edges = {'blue': extra}
+    if functions and method.startswith('labels'):
+        assert len(
+            functions) == 1, 'Only one function is allowed for method="labels"'
+
+        gr = [[] for _ in range(n)]
+        for i, fi in f_edges(functions[0]):
+            gr[fi].append(i)
+        labels = [','.join(map(str, l)) for l in gr]
+
+    colors = itertools.cycle(COLORS_CYCLE)
+
+    for f in functions:
+        extra_edges.append((next(colors), f_edges(f)))
 
     edges = [(i, j) for i in range(n) for j in range(n) if child[j, i]]
     graphviz(n, edges, labels=labels, extra_edges=extra_edges, save=save)

@@ -74,7 +74,6 @@ def random_lattice(n: int, seed: Optional[int] = None,
             method = 'Czech'
         else:
             method = 'Czech'
-
     if method == 'Czech':
         return random_lattice_czech(n, seed, **kwargs)
     raise NotImplementedError(f'{method} not in {_random_lattice_methods}')

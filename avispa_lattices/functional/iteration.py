@@ -1,24 +1,39 @@
 from __future__ import annotations
 from functools import reduce
+from optparse import Option
 from typing import TYPE_CHECKING, Any, Iterable, Literal, Optional, Tuple, cast, List, Sequence
 import typing
+from ._types import PartialEndomorphism, Endomorphism
 
 if TYPE_CHECKING:
     from .. import Poset, Lattice
-    from ._types import PartialEndomorphism, Endomorphism
 
 from ..utils.iterators import product_list
+from itertools import islice
 
 _f_iter_method = Literal['auto', 'lub', 'all', 'monotones', 'lub_no_bottom']
 _f_iter_methods: Tuple[str] = typing.get_args(_f_iter_method)
 
 
-def f_iter(L: Lattice, method: _f_iter_method = 'auto'):
+def f_iter(L: Lattice, method: _f_iter_method = 'auto', n: Optional[int] = None,
+           in_place=False):
     '''
-    Iterator of endomorphisms. By default only lub-preserving
+    Iterator of endomorphisms over a given lattice.
+    method can be:
+        'all': all endomorphisms
+        'monotones': all monotone endomorphisms
+        'lub': all join-endomorphisms, i.e. endomorphisms that preserve least-upper-bounds.
+        'lub_no_bottom': all endomorphisms that preserve lub but without the constraint f[bottom]=bottom.
+        'auto': (default) defaults to "lub"
+
+    if in_place is True (faster, but advanced), the iterator will succesively yield the same endomorphism object with entries modified
     '''
     if method == 'auto':
         method = 'lub'
+    return islice((cast(Endomorphism, f.copy()) for f in _f_iter(L, method)), n)
+
+
+def _f_iter(L: Lattice, method: _f_iter_method):
     if method == 'lub' and L.is_distributive:
         yield from f_iter_lub_distributive(L)
     elif method == 'lub':
@@ -142,7 +157,7 @@ def _f_iter_monotone_restricted(
 
 def f_iter_monotone(self: Lattice):
     'all monotone functions with f[bottom]=bottom'
-    if self.n:
+    if self.n == 0:
         return
     f = cast(List[int], [None] * self.n)
     f[self.bottom] = self.bottom
