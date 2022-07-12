@@ -31,7 +31,7 @@ def test_generation_until_7():
     non_mod = []
     mod = []
     dist = []
-    for L in AL.all_lattices(7):
+    for L in AL.iter_all_lattices(7):
         if L.is_distributive:
             dist.append(L)
         elif L.is_modular:
