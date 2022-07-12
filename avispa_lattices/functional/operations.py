@@ -2,9 +2,8 @@ from __future__ import annotations
 import functools
 import itertools
 from typing import TYPE_CHECKING, Callable, Iterable, List, Optional, Sequence, Tuple, Union, cast
-from typing_extensions import Literal
+from typing_extensions import Literal, get_args as literal_args
 from collections import deque
-import typing
 from .._version import version_is_at_least
 if TYPE_CHECKING:
     from ..base import Lattice, Poset, Relation
@@ -18,7 +17,7 @@ def f_lub(self, *functions: Endomorphism) -> Endomorphism:
 
 _f_glb_method = Literal['auto', 'pointwise', 'GMeet', 'GMeet+', 'DMeet+',
                         'JMeet', 'CMeet',]
-_f_glb_methods: Tuple[str] = typing.get_args(_f_glb_method)
+_f_glb_methods: Tuple[str] = literal_args(_f_glb_method)
 
 
 def f_glb(L: Lattice, *functions: Endomorphism,

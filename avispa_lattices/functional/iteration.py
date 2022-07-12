@@ -2,8 +2,7 @@ from __future__ import annotations
 from functools import reduce
 from optparse import Option
 from typing import TYPE_CHECKING, Any, Iterable, Optional, Tuple, cast, List, Sequence
-from typing_extensions import Literal
-import typing
+from typing_extensions import Literal, get_args as literal_args
 from ._types import PartialEndomorphism, Endomorphism
 
 if TYPE_CHECKING:
@@ -13,7 +12,7 @@ from ..utils.iterators import product_list
 from itertools import islice
 
 _f_iter_method = Literal['auto', 'lub', 'all', 'monotones', 'lub_no_bottom']
-_f_iter_methods: Tuple[str] = typing.get_args(_f_iter_method)
+_f_iter_methods: Tuple[str] = literal_args(_f_iter_method)
 
 
 def f_iter(L: Lattice, method: _f_iter_method = 'auto', n: Optional[int] = None,

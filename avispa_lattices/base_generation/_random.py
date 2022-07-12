@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple
-from typing_extensions import Literal
-import typing
+from typing_extensions import Literal, get_args as literal_args
 import numpy as np
 from .._version import version_is_at_least
 from ..utils.algorithm_floyd_warshall import transitive_closure
@@ -13,7 +12,7 @@ from ..functional._types import Endomorphism
 from ..functional.operations import fix_f_naive
 
 _random_poset_method = Literal['auto', 'p_threshold']
-_random_poset_methods: Tuple[str] = typing.get_args(_random_poset_method)
+_random_poset_methods: Tuple[str] = literal_args(_random_poset_method)
 
 
 def random_poset(n: int, seed: Optional[int] = None,
@@ -65,7 +64,7 @@ def random_lattice_czech(n: int, seed: Optional[int] = None):
 
 
 _random_lattice_method = Literal['auto', 'Czech']
-_random_lattice_methods: Tuple[str] = typing.get_args(_random_lattice_method)
+_random_lattice_methods: Tuple[str] = literal_args(_random_lattice_method)
 
 
 def random_lattice(n: int, seed: Optional[int] = None,
