@@ -10,6 +10,8 @@ from .base_generation.random import (
 )
 from .functional import f_lub, f_glb, f_iter
 
+from ._inspect import github, GITHUB, PYPI
+
 # Modules
 from . import _enum as enum
 from . import functional
