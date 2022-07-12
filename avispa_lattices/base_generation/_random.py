@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable, List, Literal, Optional, Tuple
+from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple
+from typing_extensions import Literal
 import typing
 import numpy as np
 from .._version import version_is_at_least

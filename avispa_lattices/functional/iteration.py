@@ -1,7 +1,8 @@
 from __future__ import annotations
 from functools import reduce
 from optparse import Option
-from typing import TYPE_CHECKING, Any, Iterable, Literal, Optional, Tuple, cast, List, Sequence
+from typing import TYPE_CHECKING, Any, Iterable, Optional, Tuple, cast, List, Sequence
+from typing_extensions import Literal
 import typing
 from ._types import PartialEndomorphism, Endomorphism
 

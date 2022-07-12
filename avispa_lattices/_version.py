@@ -1,7 +1,8 @@
-from typing import Literal, Optional
+from typing import Optional
+from typing_extensions import Literal
 from packaging.version import parse
 
-VERSION = '3.0.7'
+VERSION = '3.0.8'
 
 
 def version_cmp(a: str, b: Optional[str] = None) -> Literal[0, -1, 1]:

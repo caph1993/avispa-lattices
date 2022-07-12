@@ -65,7 +65,7 @@ L.show()
 #     L.show(f)
 F = [f for f in L.f_iter('lub', n=30)]
 print(F[0], F[10], F[20], sep='\n')
-AL.graphviz.COLORS_CYCLE = ['darkblue', 'darkorange', 'darkgreen', 'darkred']
+AL.graphviz.COLORS_CYCLE = ['darkblue', 'darkgreen', 'darkorange', 'darkred']
 L.show(F[0], F[10], L.f_lub(F[0], F[10]))
 L.show(F[0], F[10], L.f_lub(F[0], F[10]), L.f_glb(F[0], F[10]))
 L.show(F[0], F[10], L.f_lub(F[0], F[10]),

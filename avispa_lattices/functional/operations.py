@@ -1,7 +1,8 @@
 from __future__ import annotations
 import functools
 import itertools
-from typing import TYPE_CHECKING, Callable, Iterable, List, Literal, Optional, Sequence, Tuple, Union, cast
+from typing import TYPE_CHECKING, Callable, Iterable, List, Optional, Sequence, Tuple, Union, cast
+from typing_extensions import Literal
 from collections import deque
 import typing
 from .._version import version_is_at_least
@@ -108,6 +109,7 @@ def fix_f_naive(L: Lattice, f: Endomorphism,
     ... The complexity is, I think, O(n^4). Needs to be checked.
     '''
     lub = L.lub
+    glb = L.glb
     leq = L.leq
     it = itertools.count() if budget is None else range(budget)
     f_prev = f = f.copy()
@@ -116,13 +118,11 @@ def fix_f_naive(L: Lattice, f: Endomorphism,
             for j in range(L.n):
                 k = lub[i, j]
                 fi_lub_fj = lub[f[i], f[j]]
-                if fi_lub_fj == f[k]:
-                    pass
-                elif leq[f[k], fi_lub_fj]:
+                if leq[f[k], fi_lub_fj]:
                     f[k] = fi_lub_fj
-                else:
-                    f[i] = lub[f[i], f[k]]
-                    f[j] = lub[f[j], f[k]]
+                elif f[k] != fi_lub_fj:
+                    f[i] = glb[f[i], f[k]]
+                    f[j] = glb[f[j], f[k]]
         if f == f_prev:
             break
         f_prev = f.copy()
