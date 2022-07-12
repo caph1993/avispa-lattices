@@ -57,6 +57,11 @@ def test_generation_and_f_iteration():
 
 L = AL.random_lattice(6, seed=42)
 #help(L.f_iter)
+print(L.f_iter.methods)
+print(L.f_glb.methods)
+print(AL.random_lattice.methods)
+print(AL.random_poset.methods)
+print(AL.enum.f_iter_methods)
 L.show()
 # for f in L.f_iter('all', n=3):
 #     print(f)

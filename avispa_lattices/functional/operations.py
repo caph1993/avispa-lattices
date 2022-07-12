@@ -2,9 +2,10 @@ from __future__ import annotations
 import functools
 import itertools
 from typing import TYPE_CHECKING, Callable, Iterable, List, Optional, Sequence, Tuple, Union, cast
-from typing_extensions import Literal, get_args as literal_args
 from collections import deque
 from .._version import version_is_at_least
+from .. import _enum as AL_enum
+
 if TYPE_CHECKING:
     from ..base import Lattice, Poset, Relation
     from ._types import Endomorphism, PartialEndomorphism
@@ -15,13 +16,8 @@ def f_lub(self, *functions: Endomorphism) -> Endomorphism:
     return f_lub_pointwise(self, functions)
 
 
-_f_glb_method = Literal['auto', 'pointwise', 'GMeet', 'GMeet+', 'DMeet+',
-                        'JMeet', 'CMeet',]
-_f_glb_methods: Tuple[str] = literal_args(_f_glb_method)
-
-
 def f_glb(L: Lattice, *functions: Endomorphism,
-          method: _f_glb_method = 'auto') -> Endomorphism:
+          method: AL_enum.f_glb_method = 'auto') -> Endomorphism:
     '''
     Greatest lower bound of a set of functions.
     '''
@@ -42,7 +38,10 @@ def f_glb(L: Lattice, *functions: Endomorphism,
     elif method == 'DMeet+':
         return f_glb_DMeet_plus(L, functions)
     else:
-        raise NotImplementedError(f'"{method}" not in {_f_glb_methods}')
+        raise NotImplementedError(f'"{method}" not in {AL_enum.f_glb_methods}')
+
+
+f_glb.methods = AL_enum.f_glb_methods
 
 
 def f_glb_pointwise(L: Lattice,

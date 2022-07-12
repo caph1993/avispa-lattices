@@ -208,8 +208,6 @@ class Poset(Relation):
     Hashable object that represents an inmutable finite partial order.
     Uses a matrix and hashing is invariant under permutations.
 
-    Run print(Poset.usage) for details and usage examples.
-
     The main attributes (always present) are:
         n: size of the poset.
             The elements of the poset are range(n)
@@ -217,7 +215,6 @@ class Poset(Relation):
             leq[i,j] is True if and only "i <= j" in the poset order
         
         labels: optional sequence of n strings. Only used for displaying
-        _idx: optional permutation of 1..n (not the identity).
     '''
 
     def validate(self):

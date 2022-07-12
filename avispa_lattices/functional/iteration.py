@@ -10,13 +10,11 @@ if TYPE_CHECKING:
 
 from ..utils.iterators import product_list
 from itertools import islice
-
-_f_iter_method = Literal['auto', 'lub', 'all', 'monotones', 'lub_no_bottom']
-_f_iter_methods: Tuple[str] = literal_args(_f_iter_method)
+from .. import _enum as AL_enum
 
 
-def f_iter(L: Lattice, method: _f_iter_method = 'auto', n: Optional[int] = None,
-           in_place=False):
+def f_iter(L: Lattice, method: AL_enum.f_iter_method = 'auto',
+           n: Optional[int] = None, in_place=False):
     '''
     Iterator of endomorphisms over a given lattice.
     method can be:
@@ -33,7 +31,10 @@ def f_iter(L: Lattice, method: _f_iter_method = 'auto', n: Optional[int] = None,
     return islice((cast(Endomorphism, f.copy()) for f in _f_iter(L, method)), n)
 
 
-def _f_iter(L: Lattice, method: _f_iter_method):
+f_iter.methods = AL_enum.f_iter_methods
+
+
+def _f_iter(L: Lattice, method: AL_enum.f_iter_method):
     if method == 'lub' and L.is_distributive:
         yield from f_iter_lub_distributive(L)
     elif method == 'lub':
@@ -49,7 +50,10 @@ def _f_iter(L: Lattice, method: _f_iter_method):
             if f_is_lub_no_bottom(L, f):
                 yield f
     else:
-        raise NotImplementedError(f'"{method}" not in {_f_iter_methods}')
+        raise NotImplementedError(f'"{method}" not in {AL_enum.f_iter_methods}')
+
+
+_f_iter.methods = AL_enum.f_iter_methods
 
 
 def f_iter_lub_distributive(self: Lattice):

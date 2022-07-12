@@ -2,7 +2,7 @@
 
 `pip3 install avispa-lattices`
 
-Avispa-lattices is a python package for working with finite partially ordered sets (posets), including specially lattices.
+Avispa-lattices is a python package for working with finite partially ordered sets (posets), specially with lattices and join-endomorphisms, i.e. monotonic functions from a lattice to itself that preserve least upper bounds.
 It is developed by the AVISPA team 2020-today.
 
 Functionalities:

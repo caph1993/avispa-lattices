@@ -1,7 +1,5 @@
 from __future__ import annotations
-
 from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple
-from typing_extensions import Literal, get_args as literal_args
 import numpy as np
 from .._version import version_is_at_least
 from ..utils.algorithm_floyd_warshall import transitive_closure
@@ -10,19 +8,20 @@ from ..utils.random_state import random_state
 from ..base import Lattice, Poset
 from ..functional._types import Endomorphism
 from ..functional.operations import fix_f_naive
-
-_random_poset_method = Literal['auto', 'p_threshold']
-_random_poset_methods: Tuple[str] = literal_args(_random_poset_method)
+from .. import _enum as AL_enum
 
 
 def random_poset(n: int, seed: Optional[int] = None,
-                 method: _random_poset_method = 'auto', **kwargs):
+                 method: AL_enum.random_poset_method = 'auto', **kwargs):
     if method == 'auto':
         method = 'p_threshold'
 
     if method == 'p_threshold':
         return random_poset_p(n, seed=seed, **kwargs)
-    raise NotImplementedError(f'{method} not in {_random_lattice_methods}')
+    raise NotImplementedError(f'{method} not in {AL_enum.random_poset_method}')
+
+
+random_poset.methods = AL_enum.random_poset_methods
 
 
 def random_poset_p(n: int, p: float, seed: Optional[int] = None):
@@ -63,12 +62,8 @@ def random_lattice_czech(n: int, seed: Optional[int] = None):
     return L
 
 
-_random_lattice_method = Literal['auto', 'Czech']
-_random_lattice_methods: Tuple[str] = literal_args(_random_lattice_method)
-
-
 def random_lattice(n: int, seed: Optional[int] = None,
-                   method: _random_lattice_method = 'auto', **kwargs):
+                   method: AL_enum.random_lattice_method = 'auto', **kwargs):
     if method == 'auto':
         if version_is_at_least('3.0.6'):
             method = 'Czech'
@@ -76,7 +71,11 @@ def random_lattice(n: int, seed: Optional[int] = None,
             method = 'Czech'
     if method == 'Czech':
         return random_lattice_czech(n, seed, **kwargs)
-    raise NotImplementedError(f'{method} not in {_random_lattice_methods}')
+    raise NotImplementedError(
+        f'{method} not in {AL_enum.random_lattice_methods}')
+
+
+random_lattice.methods = AL_enum.random_lattice_methods
 
 
 def random_f_monotone_A(L: Lattice, seed=None,
@@ -142,3 +141,27 @@ def _random_f_preserving_lub(L: Lattice, seed: Optional[int] = None):
     for i, fi in zip(I, R.choice(elems, len(I), p=p_above)):
         f[i] = fi
     return fix_f_naive(L, f)
+
+
+def random_f(L: Lattice, seed: Optional[int] = None,
+             method: AL_enum.random_f_method = 'auto', **kwargs):
+    if method == 'auto':
+        method = 'arbitrary'
+    if method == 'monotone':
+        method = 'monotone_A'
+    f: Endomorphism
+    if method == 'arbitrary':
+        R = random_state(seed)
+        f = list(R.randint(0, L.n, L.n))
+    elif method == 'lub':
+        f = random_f_preserving_lub(L, seed=seed, **kwargs)
+    elif method == 'monotone_A':
+        f = random_f_monotone_A(L, seed=seed, **kwargs)
+    elif method == 'monotone_B':
+        f = random_f_monotone_B(L, seed=seed, **kwargs)
+    else:
+        raise NotImplementedError(f'{method} not in {AL_enum.random_f_methods}')
+    return f
+
+
+random_lattice.methods = AL_enum.random_f_methods
