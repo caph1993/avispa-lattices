@@ -5,6 +5,10 @@
 Avispa-lattices is a python package for working with finite partially ordered sets (posets), specially with lattices and join-endomorphisms, i.e. monotonic functions from a lattice to itself that preserve least upper bounds.
 It is developed by the AVISPA team 2020-today.
 
+Tutorial:
+
+ - https://colab.research.google.com/drive/1vFD2qMiVxppqbRaurY_wCnvKf03MaI-9?usp=sharing
+
 Functionalities:
 
  - Display a poset or a lattice, possibly in a jupyter notebook and with functions on it.
@@ -23,13 +27,6 @@ Functionalities:
 All methods and properties that are either hard to compute or frequently used are cached to speed up further computations on the same lattice.
 
 All methods are typed and or documented.
-
-<!-- # Examples
-
-```py
-L = AL.random_lattice(12, seed=42)
-L.show()
-``` -->
 
 ## Contributors
 
