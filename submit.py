@@ -16,7 +16,7 @@ def main():
     '''
     os.chdir(work_dir)
 
-    VERSION = '3.0.19'
+    VERSION = '3.0.20'
     PACKAGES = find_packages()
     REQUIREMENTS = find_requirements()
 
@@ -63,8 +63,8 @@ def submit():
     return
 
 
-def find_requirements(mode: Literal['gt', 'no-pin'] = 'gt') -> List[str]:
-    p = run(['pipreqs', '--mode', mode, '--print', 'avispa_lattices'],
+def find_requirements() -> List[str]:
+    p = run(['pipreqs', '--mode', 'no-pin', '--print', 'avispa_lattices'],
             cwd=work_dir, capture_output=True)
     return p.stdout.decode().strip().splitlines()
 

@@ -1,9 +1,9 @@
 '''
-ipython>=8.4.0
-numpy>=1.17.4
-packaging>=20.3
-Pillow>=9.2.0
-pydotplus>=2.0.2
-typing_extensions>=3.7.4.3
-xxhash>=3.0.0
+ipython
+numpy
+packaging
+Pillow
+pydotplus
+typing_extensions
+xxhash
 '''
