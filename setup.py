@@ -1,5 +1,12 @@
 from setuptools import setup, find_packages
-from avispa_lattices._VERSION import VERSION
+from pathlib import Path
+import re
+
+work_dir = Path(__file__).parent
+with open(work_dir / 'avispa_lattices' / '_version.py', 'r') as f:
+    VERSION = re.search(r'^VERSION *= *\'(.*)\'$', f.read(), re.M)
+    assert VERSION is not None
+    VERSION = VERSION.group(1)
 
 setup(
     name='avispa-lattices',
