@@ -1,12 +1,44 @@
+from setup import find_packages, ConstantPyFile
 from subprocess import check_output, run, PIPE
 from pathlib import Path
 import os, sys
 
 work_dir = Path(__file__).absolute().parent
-os.chdir(work_dir)
 
 
-def info():
+def main():
+    '''
+    1. Set the new VERSION in package_info (also REQUIREMENTS, etc.)
+    2. Submit the package to PyPI
+    3. Commit the changes to the package_info.py file
+    4. Reinstall the package locally
+    '''
+    os.chdir(work_dir)
+
+    VERSION = '3.0.17'
+    PACKAGES = find_packages()
+    REQUIREMENTS = find_requirements()
+
+    ConstantPyFile('VERSION').write(VERSION)
+    ConstantPyFile('REQUIREMENTS').write('\n'.join(REQUIREMENTS))
+    ConstantPyFile('PACKAGES').write('\n'.join(PACKAGES))
+
+    name, version = info_from_setup()
+    print(name, version)
+
+    assert version == VERSION
+
+    submit()
+
+    run('git add .', shell=True, check=True)
+    run(f'git commit -m "v{version} of {name}"', shell=True, check=True)
+    run('git push', shell=True, check=True)
+
+    run(f'pip3 install --upgrade {name}', shell=True, check=True)
+    run(f'pip3 install --upgrade {name}', shell=True, check=True)
+
+
+def info_from_setup():
     p = run('python3 setup.py --name', shell=True, stdout=PIPE, check=True)
     name = p.stdout.decode().strip()
     p = run('python3 setup.py --version', shell=True, stdout=PIPE, check=True)
@@ -25,25 +57,10 @@ def submit():
     return
 
 
-name, version = info()
-print(name, version)
+def find_requirements():
+    return run(['pipreqs', '--print', 'avispa_lattices'], cwd=work_dir,
+               capture_output=True).stdout.decode().strip().splitlines()
 
-# p = run(
-#     [sys.executable, '-m', 'pip-missing-reqs', work_dir / name],
-#     check=True,
-#     capture_output=True,
-# )
-# requirements = p.stdout.decode()
-# print('Updating requirements...')
-# with open(work_dir / 'requirements.txt', 'w') as f:
-#     f.write(requirements)
-# print(requirements)
 
-submit()
-
-run('git add .', shell=True, check=True)
-run(f'git commit -m "v{version} of {name}"', shell=True, check=True)
-run('git push', shell=True, check=True)
-
-run(f'pip3 install --upgrade {name}', shell=True, check=True)
-run(f'pip3 install --upgrade {name}', shell=True, check=True)
+if __name__ == '__main__':
+    main()

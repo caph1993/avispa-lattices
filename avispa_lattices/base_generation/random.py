@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple
 import numpy as np
-from .._version import version_is_at_least
+from ..package_info.version import version_is_at_least
 from ..utils.algorithm_floyd_warshall import transitive_closure
 from ..utils import algorithm_random_poset_czech
 from ..utils.random_state import random_state

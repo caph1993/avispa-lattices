@@ -3,7 +3,7 @@ import functools
 import itertools
 from typing import TYPE_CHECKING, Callable, Iterable, List, Optional, Sequence, Tuple, Union, cast
 from collections import deque
-from .._version import version_is_at_least
+from ..package_info.version import version_is_at_least
 from .. import _enum as AL_enum
 
 if TYPE_CHECKING:

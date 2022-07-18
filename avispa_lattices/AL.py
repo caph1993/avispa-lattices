@@ -1,4 +1,4 @@
-from ._version import VERSION
+from .package_info.version import VERSION
 
 # Classes and functions
 from .base import Lattice, Poset, Relation
@@ -10,7 +10,7 @@ from .base_generation.random import (
 )
 from .functional import f_lub, f_glb, f_iter
 
-from ._inspect import github, GITHUB, PYPI
+from .package_info.inspect import github, GITHUB, PYPI
 
 # Modules
 from . import _enum as enum
