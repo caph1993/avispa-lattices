@@ -1,3 +1,4 @@
+from typing import List, Literal
 from setup import find_packages, ConstantPyFile
 from subprocess import check_output, run, PIPE
 from pathlib import Path
@@ -15,7 +16,7 @@ def main():
     '''
     os.chdir(work_dir)
 
-    VERSION = '3.0.18'
+    VERSION = '3.0.19'
     PACKAGES = find_packages()
     REQUIREMENTS = find_requirements()
 
@@ -28,7 +29,16 @@ def main():
 
     assert version == VERSION
 
-    submit()
+    run('rm ./dist/*', shell=True, check=False, stderr=PIPE)
+    run('python3 setup.py check', shell=True, check=True)
+    run('python3 setup.py sdist', shell=True, check=True)
+
+    print('---')
+    print(*PACKAGES, sep='\n', end='\n---\n')
+    print(*REQUIREMENTS, sep='\n', end='\n---\n')
+    print(VERSION)
+
+    run('twine upload dist/*', shell=True, check=True, stdin=sys.stdin)
 
     run('git add .', shell=True, check=True)
     run(f'git commit -m "v{version} of {name}"', shell=True, check=True)
@@ -50,15 +60,11 @@ def info_from_setup():
 
 
 def submit():
-    run('rm ./dist/*', shell=True, check=False, stderr=PIPE)
-    run('python3 setup.py check', shell=True, check=True)
-    run('python3 setup.py sdist', shell=True, check=True)
-    run('twine upload dist/*', shell=True, check=True, stdin=sys.stdin)
     return
 
 
-def find_requirements():
-    p = run(['pipreqs', 'avispa_lattices', '--print', '--mode', '--no-pin'],
+def find_requirements(mode: Literal['gt', 'no-pin'] = 'gt') -> List[str]:
+    p = run(['pipreqs', '--mode', mode, '--print', 'avispa_lattices'],
             cwd=work_dir, capture_output=True)
     return p.stdout.decode().strip().splitlines()
 

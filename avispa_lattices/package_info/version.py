@@ -1,6 +1,7 @@
 from typing import Optional
 from packaging.version import parse
-from . import _version
+from . import _VERSION
+
 assert _VERSION.__doc__
 
 VERSION: str = _VERSION.__doc__
