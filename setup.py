@@ -1,5 +1,5 @@
 from setuptools import setup, find_packages
-from avispa_lattices import VERSION
+from avispa_lattices._VERSION import VERSION
 
 setup(
     name='avispa-lattices',
