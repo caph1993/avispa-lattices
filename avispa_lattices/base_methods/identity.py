@@ -12,12 +12,10 @@ from math import factorial
 from collections import deque
 import numpy as np
 from ..utils.numpy_types import npUInt64Matrix, npInt64Array
-import pyhash
+import xxhash
 from .graph import heights
 
 Ints = Union[Sequence[int], npInt64Array]
-
-_hasher = pyhash.xx_64(seed=0)
 
 
 def hasher(ints: Sequence[int]):
@@ -26,7 +24,7 @@ def hasher(ints: Sequence[int]):
     Independent of PYTHONHASHSEED unlike Python's hash.
     The output space is range(2**63), i.e. 1e18 approximately 
     '''
-    uint64hash = _hasher(str(ints)[1:-1])
+    uint64hash = xxhash.xxh64_intdigest(str(ints)[1:-1])
     int64hash = uint64hash >> 1  # Prevent overflow
     return int64hash
 

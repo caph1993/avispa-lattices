@@ -1,7 +1,9 @@
 from subprocess import check_output, run, PIPE
+from pathlib import Path
 import os, sys
 
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
+work_dir = Path(__file__).absolute().parent
+os.chdir(work_dir)
 
 
 def info():
@@ -25,6 +27,17 @@ def submit():
 
 name, version = info()
 print(name, version)
+
+# p = run(
+#     [sys.executable, '-m', 'pip-missing-reqs', work_dir / name],
+#     check=True,
+#     capture_output=True,
+# )
+# requirements = p.stdout.decode()
+# print('Updating requirements...')
+# with open(work_dir / 'requirements.txt', 'w') as f:
+#     f.write(requirements)
+# print(requirements)
 
 submit()
 

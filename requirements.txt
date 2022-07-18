@@ -1,6 +1,6 @@
 numpy
 typing-extensions
-pyhash
+xxhash
 pydotplus
 ipython
 pillow

@@ -15,7 +15,7 @@ setup(
         'typing-extensions',
         'pillow',
         'ipython',
-        'pyhash',
+        'xxhash',
         'pydotplus',
     ],
     classifiers=[
