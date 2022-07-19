@@ -26,7 +26,7 @@ def test_generation_until_7():
     non_mod = []
     mod = []
     dist = []
-    for L in AL.all_lattices(7):
+    for L in AL.iter_all_lattices(7):
         if L.is_distributive:
             dist.append(L)
         elif L.is_modular:
@@ -41,11 +41,11 @@ def test_generation_until_7():
 
 def test_generation_and_f_iteration():
 
-    lat_list = list(AL.all_latices(7))
+    lat_list = list(AL.iter_all_lattices(7))
     assert len(lat_list) == 79
 
     np.random.seed(0)
-    seeds = np.random.randint(0, np.iinfo(np.int32).min, size=len(lat_list))
+    seeds = np.random.randint(0, np.iinfo(np.int32).max, size=len(lat_list))
     lat_list += [AL.random_lattice(20, seed=s, mode='Czech') for s in seeds]
 
     for L in lat_list:
