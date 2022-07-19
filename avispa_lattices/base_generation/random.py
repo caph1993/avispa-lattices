@@ -123,7 +123,7 @@ def random_f_preserving_lub(L: Lattice, seed: Optional[int] = None,
         return f
     # Prefer complex functions
     R = random_state(seed)
-    seeds = R.randint(0, 2**32, complexity_budget)
+    seeds = R.randint(0, np.iinfo(np.int32).min, complexity_budget)
     for seed in seeds:
         new_f = _random_f_preserving_lub(L, seed=seed)
         if len(set(f)) < len(set(new_f)):

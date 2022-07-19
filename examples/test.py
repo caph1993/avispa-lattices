@@ -45,7 +45,7 @@ def test_generation_and_f_iteration():
     assert len(lat_list) == 79
 
     np.random.seed(0)
-    seeds = np.random.randint(0, 2**32, size=len(lat_list))
+    seeds = np.random.randint(0, np.iinfo(np.int32).min, size=len(lat_list))
     lat_list += [AL.random_lattice(20, seed=s, mode='Czech') for s in seeds]
 
     for L in lat_list:
