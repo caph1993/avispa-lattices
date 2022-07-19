@@ -1,9 +1,9 @@
 from __future__ import annotations
 import functools
 import itertools
-from typing import TYPE_CHECKING, Callable, Iterable, List, Optional, Sequence, Tuple, Union, cast
+from typing import TYPE_CHECKING, Iterable, List, Optional, Sequence, Tuple, Union, cast
 from collections import deque
-from ..package_info.version import version_is_at_least
+from ..package_info import version_is_at_least
 from .. import _enum as AL_enum
 
 if TYPE_CHECKING:
@@ -146,7 +146,7 @@ def f_glb_DMeet_plus(L: Lattice,
         return f_glb_pointwise(L, functions)
     covers = L.children
 
-    h: PartialEndomorphism = [None for _ in range(n)]
+    h: Endomorphism = [None for _ in range(n)]  # type:ignore
     h[L.bottom] = L.bottom
     for j in L.irreducibles:
         h[j] = L.glb_of_many(fn[j] for fn in functions)
@@ -160,8 +160,8 @@ def f_glb_DMeet_plus(L: Lattice,
             i, j, *_ = covers[x]
         except ValueError as e:
             raise e from Exception(
-                'Invariant violated: "If x has at most 1 cover then h[x] != None"'
-            )
+                'The following invariant was violated:',
+                'If x has at most 1 cover then h[x] != None')
         if h[i] is None or h[j] is None:
             if h[i] is None:
                 work.append(i)
@@ -170,7 +170,7 @@ def f_glb_DMeet_plus(L: Lattice,
             work.append(x)
         else:
             h[x] = L.lub[h[i], h[j]]
-    return h  # type:ignore
+    return h
 
 
 # def _as_external_lattice(self: Lattice):

@@ -7,6 +7,9 @@ Run from parent folder with:
 python3 -m avispa_lattices.test
 '''
 
+print(AL.package_info.REQUIREMENTS)
+print(AL.package_info.PACKAGES)
+
 
 def test_M3():
     L = AL.Lattice.from_up_edges(5, [(0, 1), (0, 2), (0, 3), (1, 4), (2, 4),
@@ -81,7 +84,7 @@ def test_f_glb():
     R = np.random.RandomState(123976)
     #P = AL.random_poset
     L = AL.random_lattice(5, seed=R.randint(0,
-                                            np.iinfo(np.int32).min),
+                                            np.iinfo(np.int32).max),
                           method='Czech')
     L.show()
     print(L.is_distributive)
@@ -93,7 +96,7 @@ def test_f_glb():
     return
 
 
-# test_f_glb()
+test_f_glb()
 # test_generation_and_f_iteration()
 # test_M3()
 # test_M5()
