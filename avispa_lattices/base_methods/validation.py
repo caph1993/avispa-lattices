@@ -192,11 +192,11 @@ class NotComplete(NotLattice):  # Because all finite lattices are complete
 
 
 class NotUniqueBottom(NotComplete):
-    _message = 'Given poset has multiple bottom elements'
+    _message = 'Given poset has multiple bottom elements (or none)'
 
 
 class NotUniqueTop(NotComplete):
-    _message = 'Given poset has multiple top elements'
+    _message = 'Given poset has multiple top elements (or none)'
 
 
 def expect_unique_bottom(P: Poset):

@@ -3,7 +3,6 @@ import functools
 from typing import Any, Callable, Generic, Iterable, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, cast, overload
 import numpy as np
 
-from . import functional
 from .utils.methodtools import cached_property, cached_method
 from .utils.algorithm_tarjan import Tarjan
 from .utils.numpy_types import npBoolMatrix, npUInt64Matrix
@@ -12,6 +11,8 @@ from .utils.algorithm_floyd_warshall import floyd_warshall, transitive_closure
 from .utils.methodtools import implemented_at
 from .base_methods import validation, identity, graphs, interface, description, graphviz
 
+from . import function_operations
+from . import function_iteration
 from . import base_methods as MD
 
 from .base_methods.validation import PosetExceptions
@@ -68,10 +69,14 @@ class Relation:
     def validate(self):
         pass  # All binary matrices are valid relations
 
-    @cached_property
+    @property
     def is_poset(self):
         method = lambda: self.as_poset(check=True) and None
         return validation.ValidationError.capture(method)
+
+    @cached_method(maxsize=1)
+    def assert_is_poset(self):
+        self.as_poset(check=False)
 
     def as_poset(self, check: bool):
         return self.as_type(Poset, check=check)
@@ -224,7 +229,11 @@ class Poset(Relation):
     def as_lattice(self, check: bool):
         return self.as_type(Lattice, check=check)
 
-    @cached_property
+    @cached_method(maxsize=1)
+    def assert_is_lattice(self):
+        self.as_lattice(check=True)
+
+    @property
     def is_lattice(self):
         return self.try_type(Lattice) is not None
 
@@ -334,6 +343,14 @@ class Poset(Relation):
     def tops(self):
         return graphs.tops(self)
 
+    @implemented_at(function_iteration.f_iter_all_poset)
+    def f_iter_all(self, *args, **kwargs):
+        ...
+
+    @implemented_at(function_iteration.f_iter_monotones_poset)
+    def f_iter_monotones(self, *args, **kwargs):
+        ...
+
 
 class Lattice(Poset):
 
@@ -341,18 +358,26 @@ class Lattice(Poset):
         super().validate()
         validation.assert_is_lattice(self)
 
-    @cached_property
+    @cached_method(maxsize=1)
+    def assert_is_distributive(self):
+        validation.assert_is_distributive(self)
+
+    @cached_method(maxsize=1)
+    def assert_is_modular(self):
+        validation.assert_is_modular(self)
+
+    @property
     def is_distributive(self):
         try:
-            validation.assert_is_distributive(self)
+            self.assert_is_distributive()
         except validation.ValidationError:
             return False
         return True
 
-    @cached_property
+    @property
     def is_modular(self):
         try:
-            validation.assert_is_modular(self)
+            self.assert_is_modular()
         except validation.ValidationError:
             return False
         return True
@@ -435,14 +460,42 @@ class Lattice(Poset):
             self.top,
         )
 
-    @implemented_at(functional.f_lub)
+    @implemented_at(function_operations.f_lub_pointwise)
     def f_lub(self, *args, **kwargs):
         ...
 
-    @implemented_at(functional.f_glb)
+    @implemented_at(function_operations.f_glb_pointwise)
+    def f_glb_pointwise(self, *args, **kwargs):
+        ...
+
+    @implemented_at(function_operations.f_glb)
     def f_glb(self, *args, **kwargs):
         ...
 
-    @implemented_at(functional.f_iter)
-    def f_iter(self, *args, **kwargs):
+    @implemented_at(function_iteration.f_iter_all)
+    def f_iter_all(self, *args, **kwargs):
+        ...
+
+    @implemented_at(function_iteration.f_iter_monotones)
+    def f_iter_monotones(self, *args, **kwargs):
+        ...
+
+    @implemented_at(function_iteration.f_iter_lub)
+    def f_iter_lub(self, *args, **kwargs):
+        ...
+
+    @implemented_at(function_iteration.f_is_lub)
+    def f_is_lub(self, *args, **kwargs):
+        ...
+
+    @implemented_at(function_iteration.f_is_monotone)
+    def f_is_monotone(self, *args, **kwargs):
+        ...
+
+    @implemented_at(function_iteration.f_assert_is_lub)
+    def f_assert_is_lub(self, *args, **kwargs):
+        ...
+
+    @implemented_at(function_iteration.f_assert_is_monotone)
+    def f_assert_is_monotone(self, *args, **kwargs):
         ...

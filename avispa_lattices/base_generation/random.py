@@ -6,9 +6,9 @@ from ..utils.algorithm_floyd_warshall import transitive_closure
 from ..utils import algorithm_random_poset_czech
 from ..utils.random_state import random_state
 from ..base import Lattice, Poset
-from ..functional._types import Endomorphism
-from ..functional.operations import fix_f_naive
+from ..function_operations import fix_f_naive
 from .. import _enum as AL_enum
+from .._function_types import Endomorphism
 
 
 def random_poset(n: int, seed: Optional[int] = None,

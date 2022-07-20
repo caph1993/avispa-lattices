@@ -4,6 +4,7 @@ numpy
 packaging
 Pillow
 pydotplus
+PySimpleGUI
 typing_extensions
 xxhash
 '''

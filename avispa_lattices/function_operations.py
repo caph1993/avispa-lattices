@@ -3,49 +3,46 @@ import functools
 import itertools
 from typing import TYPE_CHECKING, Iterable, List, Optional, Sequence, Tuple, Union, cast
 from collections import deque
-from ..package_info import version_is_at_least
-from .. import _enum as AL_enum
+from .package_info import version_is_at_least
+from . import _enum as AL_enum
+from ._function_types import Endomorphism, PartialEndomorphism
 
 if TYPE_CHECKING:
-    from ..base import Lattice, Poset, Relation
-    from ._types import Endomorphism, PartialEndomorphism
+    from .base import Lattice, Poset, Relation
 
 
-def f_lub(self, *functions: Endomorphism) -> Endomorphism:
+def f_lub_pointwise(self, *functions: Endomorphism) -> Endomorphism:
     'Pointwise lowest upper bound of a set of functions'
-    return f_lub_pointwise(self, functions)
+    return _f_lub_pointwise(self, functions)
 
 
-def f_glb(L: Lattice, *functions: Endomorphism,
-          method: AL_enum.f_glb_method = 'auto') -> Endomorphism:
+def _f_lub_pointwise(L: Lattice,
+                     functions: Iterable[Endomorphism]) -> Endomorphism:
     '''
-    Greatest lower bound of a set of functions.
+    Pointwise lowest upper bound of a set of functions.
+
+    This implementation avoids computing the default every
+    time and supports comprehensions as input.
     '''
-    if method == 'auto':
-        if L.is_distributive:
-            method = 'DMeet+'
-        else:
-            if version_is_at_least('3.1.0'):
-                method = 'GMeet+'
-            else:
-                method = 'GMeet'
-    if method == 'pointwise':
-        return f_glb_pointwise(L, functions)
-    elif method == 'GMeet':
-        return f_glb_GMeet(L, functions)
-    elif method == 'GMeet+':
-        raise NotImplementedError
-    elif method == 'DMeet+':
-        return f_glb_DMeet_plus(L, functions)
-    else:
-        raise NotImplementedError(f'"{method}" not in {AL_enum.f_glb_methods}')
+    try:
+        first, *functions = functions
+    except ValueError:
+        return [L.bottom] * L.n
+    h = functools.reduce(
+        lambda f, g: [L.lub[f[i], g[i]] for i in range(L.n)],
+        functions,
+        first,
+    )
+    return h
 
 
-f_glb.methods = AL_enum.f_glb_methods
+def f_glb_pointwise(self, *functions: Endomorphism) -> Endomorphism:
+    'Pointwise lowest upper bound of a set of functions'
+    return _f_glb_pointwise(self, functions)
 
 
-def f_glb_pointwise(L: Lattice,
-                    functions: Iterable[Endomorphism]) -> Endomorphism:
+def _f_glb_pointwise(L: Lattice,
+                     functions: Iterable[Endomorphism]) -> Endomorphism:
     '''
     Pointwise greatest lower bound of a set of functions.
 
@@ -66,33 +63,39 @@ def f_glb_pointwise(L: Lattice,
     return h
 
 
-def f_lub_pointwise(L: Lattice,
-                    functions: Iterable[Endomorphism]) -> Endomorphism:
+def f_glb(L: Lattice, *functions: Endomorphism,
+          method: AL_enum.f_glb_method = 'auto') -> Endomorphism:
     '''
-    Pointwise lowest upper bound of a set of functions.
-
-    This implementation avoids computing the default every
-    time and supports comprehensions as input.
+    Greatest lower bound of a set of functions.
     '''
-    try:
-        first, *functions = functions
-    except ValueError:
-        return [L.bottom] * L.n
-    h = functools.reduce(
-        lambda f, g: [L.lub[f[i], g[i]] for i in range(L.n)],
-        functions,
-        first,
-    )
-    return h
+    if method == 'auto':
+        if L.is_distributive:
+            method = 'DMeet+'
+        else:
+            if version_is_at_least('3.1.0'):
+                method = 'GMeet+'
+            else:
+                method = 'GMeet'
+    if method == 'GMeet':
+        return _f_glb_GMeet(L, functions)
+    elif method == 'GMeet+':
+        raise NotImplementedError
+    elif method == 'DMeet+':
+        return f_glb_DMeet_plus(L, functions)
+    else:
+        raise NotImplementedError(f'"{method}" not in {AL_enum.f_glb_methods}')
 
 
-def f_glb_GMeet(L: Lattice, functions: Iterable[Endomorphism]) -> Endomorphism:
+f_glb.methods = AL_enum.f_glb_methods
+
+
+def _f_glb_GMeet(L: Lattice, functions: Iterable[Endomorphism]) -> Endomorphism:
     """
     Greatest lower bound of a set of lub-functions.
 
     Algorithm 2 in "Counting and Computing Join-Endomorphisms in Lattices (Revisited)*"
     """
-    h = f_glb_pointwise(L, functions)
+    h = _f_glb_pointwise(L, functions)
     h = fix_f_naive(L, h)
     return h
 
@@ -116,7 +119,7 @@ def fix_f_naive(L: Lattice, f: Endomorphism,
             for j in range(L.n):
                 k = lub[i, j]
                 fi_lub_fj = lub[f[i], f[j]]
-                if leq[f[k], fi_lub_fj]:
+                if leq[fi_lub_fj, f[k]]:
                     f[k] = fi_lub_fj
                 elif f[k] != fi_lub_fj:
                     f[i] = glb[f[i], f[k]]
@@ -143,7 +146,7 @@ def f_glb_DMeet_plus(L: Lattice,
     """
     n = L.n
     if len(functions) <= 1:
-        return f_glb_pointwise(L, functions)
+        return _f_glb_pointwise(L, functions)
     covers = L.children
 
     h: Endomorphism = [None for _ in range(n)]  # type:ignore

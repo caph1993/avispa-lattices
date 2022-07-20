@@ -2,8 +2,8 @@ from __future__ import annotations
 import itertools
 from typing import TYPE_CHECKING, Dict, List, Optional, cast
 
-from ..functional._types import PartialEndomorphism
 if TYPE_CHECKING:
+    from .._function_types import PartialEndomorphism
     from ..base import Lattice, Poset, Relation
 from typing import Sequence, Tuple
 
