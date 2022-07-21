@@ -7,7 +7,7 @@ from ._function_types import PartialEndomorphism, Endomorphism, partial_endomorp
 from .utils.iterators import product_list
 from itertools import islice
 from . import _enum as AL_enum
-from .base_methods.validation import ValidationError
+from .lattice.validation import ValidationError
 
 if TYPE_CHECKING:
     from . import Poset, Lattice

@@ -3,9 +3,8 @@ from fractions import Fraction
 import itertools
 from typing import TYPE_CHECKING, Iterable, Iterator, List, Optional, Sequence, Tuple, TypeVar, Union, cast
 
-from avispa_lattices import base
 if TYPE_CHECKING:
-    from ..base import Lattice, Poset, Relation
+    from .lattice import Lattice, Poset, Relation
     T_Relation = TypeVar('T_Relation', Relation, Poset, Lattice)
 
 from math import factorial

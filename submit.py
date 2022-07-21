@@ -16,7 +16,7 @@ def main():
     '''
     os.chdir(work_dir)
 
-    VERSION = '3.0.24'
+    VERSION = '3.0.25'
     PACKAGES = find_packages()
     REQUIREMENTS = find_requirements()
 
@@ -58,9 +58,6 @@ def info_from_setup():
     assert ' ' not in name, f'"{name}" must not have spaces (security check)'
     return name, version
 
-
-def submit():
-    return
 
 
 def find_requirements() -> List[str]:

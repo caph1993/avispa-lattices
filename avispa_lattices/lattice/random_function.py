@@ -1,84 +1,33 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple
 import numpy as np
-from ..package_info import version_is_at_least
-from ..utils.algorithm_floyd_warshall import transitive_closure
-from ..utils import algorithm_random_poset_czech
 from ..utils.random_state import random_state
-from ..base import Lattice, Poset
 from ..function_operations import fix_f_naive
 from .. import _enum as AL_enum
 from .._function_types import Endomorphism
 
-
-def random_poset(n: int, seed: Optional[int] = None,
-                 method: AL_enum.random_poset_method = 'auto', **kwargs):
-    if method == 'auto':
-        method = 'p_threshold'
-
-    if method == 'p_threshold':
-        return random_poset_p(n, seed=seed, **kwargs)
-    raise NotImplementedError(f'{method} not in {AL_enum.random_poset_method}')
+if TYPE_CHECKING:
+    from .lattice import Lattice as _Lattice, Poset as _Poset, Relation as _Relation
 
 
-random_poset.methods = AL_enum.random_poset_methods
-
-
-def random_poset_p(n: int, p: float, seed: Optional[int] = None):
-    '''
-    Generates a random poset.
-    All posets (modulo labels) have positive probability of being generated.
-    If p is close to 0, the poset is very sparse.
-    If p is close to 1, the poset is very dense.
-    '''
+def random_f_arbitrary(_: _Relation, seed=None):
+    n = _.n
     R = random_state(seed)
-    leq = np.zeros((n, n), dtype=bool)
-    for i in range(n):
-        for j in range(i + 1, n):
-            if R.random() < p:
-                leq[i, j] = 1
-    for i in range(n):
-        leq[i, i] = 1
-    leq = transitive_closure(leq)
-    leq.flags.writeable = False
-    return Poset(leq, check=True)
+    f: Endomorphism = list(R.randint(0, n, n))
+    return f
 
 
-def random_lattice_czech(n: int, seed: Optional[int] = None):
-    '''
-    Description: http://ka.karlin.mff.cuni.cz/jezek/093/random.pdf
-    '''
-    lub = algorithm_random_poset_czech.random_lattice(n, seed)
-    child = (lub <= np.arange(n)[None, :])
-    leq = transitive_closure(child)
-    leq.flags.writeable = False
-    L = Lattice(leq, check=False)
-    if len(L.bottoms) >= 2:  # Collapse bottoms
-        bot = L.bottoms[0]
-        leq.flags.writeable = True
-        leq[bot, :] = True
-        leq.flags.writeable = False
-        L = Lattice(leq, check=False)
-    return L
+def random_f_monotone(P: _Poset, seed=None):
+    R = random_state(seed)
+    elems = np.arange(P.n)
+    R.shuffle(elems)
+    for i in elems:
+        # Choose f[i] without interfeering previous choices
+        pass
+    raise NotImplementedError()
 
 
-def random_lattice(n: int, seed: Optional[int] = None,
-                   method: AL_enum.random_lattice_method = 'auto', **kwargs):
-    if method == 'auto':
-        if version_is_at_least('3.0.6'):
-            method = 'Czech'
-        else:
-            method = 'Czech'
-    if method == 'Czech':
-        return random_lattice_czech(n, seed, **kwargs)
-    raise NotImplementedError(
-        f'{method} not in {AL_enum.random_lattice_methods}')
-
-
-random_lattice.methods = AL_enum.random_lattice_methods
-
-
-def random_f_monotone_A(L: Lattice, seed=None,
+def random_f_monotone_A(L: _Lattice, seed=None,
                         _max_arbitrary_fi: Optional[int] = None):
     R = random_state(seed)
     f: Endomorphism = [-1] * L.n
@@ -96,7 +45,7 @@ def random_f_monotone_A(L: Lattice, seed=None,
     return f
 
 
-def random_f_monotone_B(L: Lattice, seed=None):
+def random_f_monotone_B(L: _Lattice, seed=None):
     R = random_state(seed)
     f: Endomorphism = [-1] * L.n
     n_above = L.leq.sum(axis=1)
@@ -116,8 +65,7 @@ def random_f_monotone_B(L: Lattice, seed=None):
     return f
 
 
-def random_f_preserving_lub(L: Lattice, seed: Optional[int] = None,
-                            complexity_budget=5):
+def random_f_lub(L: _Lattice, seed: Optional[int] = None, complexity_budget=5):
     f = _random_f_preserving_lub(L, seed=seed)
     if complexity_budget == 0:
         return f
@@ -131,7 +79,7 @@ def random_f_preserving_lub(L: Lattice, seed: Optional[int] = None,
     return f
 
 
-def _random_f_preserving_lub(L: Lattice, seed: Optional[int] = None):
+def _random_f_preserving_lub(L: _Lattice, seed: Optional[int] = None):
     R = random_state(seed)
     n_above = L.leq.sum(axis=1)
     p_above = n_above / n_above.sum()
@@ -143,7 +91,7 @@ def _random_f_preserving_lub(L: Lattice, seed: Optional[int] = None):
     return fix_f_naive(L, f)
 
 
-def random_f(L: Lattice, seed: Optional[int] = None,
+def random_f(L: _Lattice, seed: Optional[int] = None,
              method: AL_enum.random_f_method = 'auto', **kwargs):
     if method == 'auto':
         method = 'arbitrary'
@@ -154,7 +102,7 @@ def random_f(L: Lattice, seed: Optional[int] = None,
         R = random_state(seed)
         f = list(R.randint(0, L.n, L.n))
     elif method == 'lub':
-        f = random_f_preserving_lub(L, seed=seed, **kwargs)
+        f = random_f_lub(L, seed=seed, **kwargs)
     elif method == 'monotone_A':
         f = random_f_monotone_A(L, seed=seed, **kwargs)
     elif method == 'monotone_B':
@@ -164,4 +112,4 @@ def random_f(L: Lattice, seed: Optional[int] = None,
     return f
 
 
-random_lattice.methods = AL_enum.random_f_methods
+random_f.methods = AL_enum.random_f_methods

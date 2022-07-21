@@ -8,7 +8,7 @@ from . import _enum as AL_enum
 from ._function_types import Endomorphism, PartialEndomorphism
 
 if TYPE_CHECKING:
-    from .base import Lattice, Poset, Relation
+    from .lattice.lattice import Lattice, Poset, Relation
 
 
 def f_lub_pointwise(self, *functions: Endomorphism) -> Endomorphism:

@@ -3,22 +3,24 @@ from .package_info import (
     VERSION,
     github,
 )
-from .base import (
+from .lattice.lattice import (
     Lattice,
     Poset,
     Relation,
 )
-from .base_generation.exhaustive import (
+from .lattice_iteration import (
     iter_all_lattices,)
-from .base_generation.random import (
+from .random.random_lattice import (
     random_lattice,
     random_poset,
-    random_f,
 )
 
+from .visualization.gui import new_visualizer
+
 # Modules
-from . import package_info
-from . import function_iteration
-from .base_methods import validation, graphviz
-from .base_generation import random, exhaustive
-from . import _enum as enum
+from . import (
+    package_info,
+    visualization,
+    function_iteration,
+    function_operations,
+)

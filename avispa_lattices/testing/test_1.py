@@ -1,5 +1,4 @@
 from .. import AL
-from . import viewer
 from math import comb, factorial
 
 
@@ -12,25 +11,26 @@ def main():
         assert expected == found, (n, expected, found)
         AL.function_iteration.test_f_iter_all_bottom(L)
 
-    show = viewer.launch()
+    vpath = AL.new_visualizer('f_iter_lub')
     L = AL.random_lattice(6, seed=42)
-    i = 0
     for f in L.f_iter_lub():
+        png, txt = next(vpath)
         L.f_assert_is_lub(f)
-        i += 1
-        L.show(f, save=show / f'{i}.png')
+        L.show(f, save=png)
+        txt.write_text(f'{f}\n')
 
-    show = viewer.launch()
-    for i in range(20):
+    vpath = AL.new_visualizer('random_lattice(0..20)')
+    for i, (png, txt) in zip(range(21), vpath):
         L = AL.random_lattice(i, seed=42)
-        L.show(save=show / f'{i}.png')
+        L.show(save=png)
 
-    show = viewer.launch()
+    vpath = AL.new_visualizer('random_lattice(8)')
     for seed in range(30):
+        png, txt = next(vpath)
         L = AL.random_lattice(8, seed=seed)
-        L.show(save=show / f'{seed}.png')
-        (show / f'{seed}.txt').write_text(f'modular={L.is_modular}\n'
-                                          f'distributive={L.is_distributive}\n')
+        L.show(save=png)
+        txt.write_text(f'modular={L.is_modular}\n'
+                       f'distributive={L.is_distributive}\n')
         if L.is_distributive:
             L.assert_is_modular()
     #L.show()

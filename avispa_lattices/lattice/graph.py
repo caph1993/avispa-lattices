@@ -2,7 +2,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import TYPE_CHECKING, List, Optional, Sequence, Union, cast
 if TYPE_CHECKING:
-    from ..base import Lattice, Poset, Relation
+    from .lattice import Lattice, Poset, Relation
 
 import numpy as np
 from ..utils.numpy_types import npBoolMatrix, npUInt64Matrix
@@ -124,7 +124,8 @@ def independent_components(self: Poset):
 def transitive_reduction(leq: npBoolMatrix):
     ''''
     Compute in O(n^3) the transitive reduction of the given relation
-    Assuming that it is a poset
+    Assumes that the input is a poset
+    This is the (maximal) inverse operation of the transitive closure
     The output relation is also known as "Hasse diagram"
     '''
     lt = leq.copy()
@@ -168,6 +169,6 @@ def _toposort_children(self: Poset, domain: Optional[Sequence[int]]):
     n = self.n
     D = range(n) if domain is None else domain
     topo = [i for i in self.toposort_bottom_up if i in D]
-    sub = self.MD.graphs.subgraph(self, topo)
+    sub = subgraph(self, topo)
     children = [[topo[j] for j in l] for l in sub.children]
     return topo, children

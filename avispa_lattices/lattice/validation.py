@@ -1,9 +1,9 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Callable, List, Optional, TypeVar, overload
+from typing import TYPE_CHECKING, Callable, List, Optional, TypeVar, Union, overload
 import itertools
 
 if TYPE_CHECKING:
-    from ..base import Lattice, Poset, Relation
+    from .lattice import Lattice, Poset, Relation
 
 import numpy as np
 
@@ -27,8 +27,9 @@ class ValidationError(AssertionError):
         return f'{X._description()}\n\nISSUE: {self._message}\n\nRaised because:\n{why_false}'
 
     @classmethod
-    def assert_false(cls, X: Relation, why_false: str):
+    def assert_false(cls, X: Relation, why_false: Union[str, int, None]):
         if why_false:
+            assert isinstance(why_false, str), why_false
             raise cls(X, why_false)
 
     @classmethod

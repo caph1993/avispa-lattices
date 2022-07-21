@@ -1,9 +1,10 @@
+from __future__ import annotations
 from pathlib import Path
 import random
 import traceback
 import platform, subprocess, webbrowser
 from tempfile import TemporaryDirectory
-from typing import Any, Iterable, List, Optional, Union, cast
+from typing import Any, Iterable, Iterator, List, Optional, Tuple, Union, cast
 import argparse, glob, re, sys
 from subprocess import Popen
 import PySimpleGUI as sg
@@ -20,8 +21,8 @@ def open_file(path: Path):
     return
 
 
-__all__ = ['launch']
-TMP_PREFIX = '-tmp-viewer-'
+__all__ = ['new_visualizer']
+TMP_PREFIX = '-tmp-visualizer-'
 
 
 def naturally_sorted(l: Iterable[Path]):
@@ -47,12 +48,13 @@ def main():
         prog=None,
         description='Display images of current directory in a GUI with slider',
     )
-    parser.parse_args()
+    parser.add_argument('--title', type=str, default=None, help='Window title')
+    parsed = parser.parse_args()
     try:
         with open('stdout.log', 'w') as f, open('stderr.log', 'w') as g:
             sys.stdout = f
             sys.stderr = g
-            main_GUI()
+            main_GUI(parsed.title)
     except Exception as e:
         sg.popup_error(f'{e}\n\n{traceback.format_exc()}')
     finally:
@@ -67,8 +69,9 @@ def main():
     return
 
 
-def main_GUI():
+def main_GUI(title: Optional[str]):
     cwd = Path('.').absolute()
+    title = title or 'Image Viewer'
     layout = [
         [
             sg.Text('Scanning'),
@@ -90,7 +93,7 @@ def main_GUI():
         [sg.Multiline(key='txt', size=(40, 10), disabled=True)],
     ]
     location = (random.randint(-50, 50), random.randint(-50, 50))
-    window = sg.Window('Image viewer', layout, relative_location=location,
+    window = sg.Window(title, layout, relative_location=location,
                        return_keyboard_events=True)
     files: List[Path] = []
     gmtime = 0.0
@@ -180,13 +183,35 @@ def main_GUI():
     return
 
 
-def launch(tmp_dir: Optional[Path] = None):
+class VisualizerPath(Path, Iterator[Tuple[Path, Path]]):
+    _flavour = type(Path())._flavour  # type: ignore
+    _counter = 0
+
+    def __next__(self) -> Tuple[Path, Path]:
+        png = self.png()
+        txt = self.txt()
+        self._counter += 1
+        return png, txt
+
+    def png(self):
+        return Path(self / f'{self._counter}.png')
+
+    def txt(self):
+        return Path(self / f'{self._counter}.txt')
+
+
+def new_visualizer(
+    title: Optional[str] = None,
+    tmp_dir: Optional[Path] = None,
+):
     if tmp_dir is None:
         tmp_dir = Path(TemporaryDirectory(prefix=TMP_PREFIX).name)
         tmp_dir.mkdir(exist_ok=True)
-
-    Popen([sys.executable, __file__], cwd=tmp_dir)
-    return tmp_dir
+    else:
+        assert tmp_dir.is_dir(), tmp_dir
+    args = [] if title is None else ['--title', title]
+    Popen([sys.executable, __file__, *args], cwd=tmp_dir)
+    return VisualizerPath(tmp_dir)
 
 
 if __name__ == '__main__':

@@ -1,21 +1,22 @@
 from __future__ import annotations
 import functools
+from random import random
 from typing import Any, Callable, Generic, Iterable, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, cast, overload
 import numpy as np
 
-from .utils.methodtools import cached_property, cached_method
-from .utils.algorithm_tarjan import Tarjan
-from .utils.numpy_types import npBoolMatrix, npUInt64Matrix
-from . import utils
-from .utils.algorithm_floyd_warshall import floyd_warshall, transitive_closure
-from .utils.methodtools import implemented_at
-from .base_methods import validation, identity, graphs, interface, description, graphviz
+from ..visualization import graphviz
+from ..utils.methodtools import cached_property, cached_method
+from ..utils.algorithm_tarjan import Tarjan
+from ..utils.numpy_types import npBoolMatrix, npUInt64Matrix
+from .. import utils
+from ..utils.methodtools import implemented_at
+from . import validation, identity, graph, interface, description, random_function
 
-from . import function_operations
-from . import function_iteration
-from . import base_methods as MD
+from .. import function_operations
+from .. import function_iteration
+from .. import lattice as MD
 
-from .base_methods.validation import PosetExceptions
+from .validation import PosetExceptions
 
 Endomorphism = List[int]
 PartialEndomorphism = Union[List[Optional[int]], List[None], Endomorphism]
@@ -207,6 +208,10 @@ class Relation:
                 return False
         return True
 
+    @implemented_at(random_function.random_f_arbitrary)
+    def random_f_arbitrary(self, *args, **kwargs):
+        ...
+
 
 class Poset(Relation):
     '''
@@ -282,7 +287,7 @@ class Poset(Relation):
         nxn boolean matrix: transitive reduction of the poset.
         child[i,j] == True iff j covers i (with no elements inbetween)
         '''
-        child = graphs.transitive_reduction(self.leq)
+        child = graph.transitive_reduction(self.leq)
         child.flags.writeable = False
         return child
 
@@ -333,15 +338,15 @@ class Poset(Relation):
 
     @cached_property
     def toposort_bottom_up(self):
-        return graphs.toposort_bottom_up(self)
+        return graph.toposort_bottom_up(self)
 
     @cached_property
     def bottoms(self):
-        return graphs.bottoms(self)
+        return graph.bottoms(self)
 
     @cached_property
     def tops(self):
-        return graphs.tops(self)
+        return graph.tops(self)
 
     @implemented_at(function_iteration.f_iter_all_poset)
     def f_iter_all(self, *args, **kwargs):
@@ -349,6 +354,10 @@ class Poset(Relation):
 
     @implemented_at(function_iteration.f_iter_monotones_poset)
     def f_iter_monotones(self, *args, **kwargs):
+        ...
+
+    @implemented_at(random_function.random_f_monotone)
+    def random_f_monotone(self, *args, **kwargs):
         ...
 
 
@@ -436,12 +445,12 @@ class Lattice(Poset):
         if n <= 1:  # no join irreducibles at all
             return (0, [], [])
         irr = self.irreducibles
-        sub = graphs.subgraph(self, irr)
-        subcomps = graphs.independent_components(sub)
+        sub = graph.subgraph(self, irr)
+        subcomps = graph.independent_components(sub)
         m = len(subcomps)
         irrcomps = [[irr[j] for j in subcomps[i]] for i in range(m)]
         m_topo, m_children = zip(
-            *(graphs._toposort_children(self, irrcomps[i]) for i in range(m)))
+            *(graph._toposort_children(self, irrcomps[i]) for i in range(m)))
         m_topo = cast(Tuple[List[int]], m_topo)
         m_children = cast(Tuple[List[List[int]]], m_children)
         return m, m_topo, m_children
@@ -498,4 +507,8 @@ class Lattice(Poset):
 
     @implemented_at(function_iteration.f_assert_is_monotone)
     def f_assert_is_monotone(self, *args, **kwargs):
+        ...
+
+    @implemented_at(random_function.random_f_lub)
+    def random_f_lub(self, *args, **kwargs):
         ...

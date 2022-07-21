@@ -2,11 +2,11 @@ from __future__ import annotations
 from collections import deque
 from typing import TYPE_CHECKING, Optional
 
-from ..base import Lattice
+from .lattice.lattice import Lattice
 
 import numpy as np
 from itertools import chain
-from ..utils.iterators import cartesian
+from .utils.iterators import cartesian
 
 
 def _add_edge(self: Lattice, i, j, assume_poset=False):

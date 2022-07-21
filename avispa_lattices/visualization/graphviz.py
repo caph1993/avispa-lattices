@@ -1,10 +1,13 @@
 from __future__ import annotations
 import itertools
-from typing import TYPE_CHECKING, Dict, List, Optional, cast
+from pathlib import Path
+from typing import TYPE_CHECKING, Dict, List, Optional, Union, cast
+from pydotplus import graph_from_edges
+from pydotplus.graphviz import Node, Edge
 
 if TYPE_CHECKING:
     from .._function_types import PartialEndomorphism
-    from ..base import Lattice, Poset, Relation
+    from ..lattice.lattice import Lattice, Poset, Relation
 from typing import Sequence, Tuple
 
 
@@ -13,11 +16,9 @@ def graphviz(
     edges: Sequence[Tuple[int, int]],
     labels: Sequence[str],
     extra_edges: List[Tuple[str, List[Tuple[int, int]]]] = [],
-    save: Optional[str] = None,
+    save: Optional[Union[str, Path]] = None,
 ):
     'Show graph using graphviz. blue edges are extra edges'
-    from pydotplus import graph_from_edges
-    from pydotplus.graphviz import Node, Edge
 
     black_color = '#aaaaaa'
 
@@ -68,11 +69,9 @@ def graphviz(
     return
 
 
-COLORS_CYCLE = ['darkgreen', 'darkblue', 'darkred', 'darkorange', 'darkviolet']
-
-
 def show(P: Poset, *functions: PartialEndomorphism, method='auto', labels=None,
-         save=None):
+         save: Optional[Union[str, Path]] = None,
+         colors_cycle: Optional[List[str]] = None):
     '''
     Use graphviz to display or save P as a Hasse diagram.
     The argument "method" (string) only affects visualization
@@ -83,6 +82,8 @@ def show(P: Poset, *functions: PartialEndomorphism, method='auto', labels=None,
         - arrows_bottom: (no arrow at i if f[i]=bottom)
         - auto: 'arrows_bottom' if P is a lattice and f preserves lub. 'arrows' otherwise.
     Hidding bottom is only allowed if P.bottom makes sense.
+
+    For color names, see: https://graphviz.org/doc/info/colors.html
     '''
     methods = ('auto', 'labels', 'arrows', 'labels_bottom', 'arrows_bottom')
     assert method in methods, f'Unknown method "{method}"'
@@ -110,7 +111,9 @@ def show(P: Poset, *functions: PartialEndomorphism, method='auto', labels=None,
             gr[fi].append(i)
         labels = [','.join(map(str, l)) for l in gr]
 
-    colors = itertools.cycle(COLORS_CYCLE)
+    colors = itertools.cycle(
+        colors_cycle or
+        ['darkgreen', 'darkblue', 'darkred', 'darkorange', 'darkviolet'])
 
     for f in functions:
         extra_edges.append((next(colors), f_edges(f)))

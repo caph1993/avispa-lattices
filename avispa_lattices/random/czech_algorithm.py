@@ -1,5 +1,5 @@
 import numpy as np
-from .random_state import random_state
+from ..utils.random_state import random_state
 
 
 def random_lattice(n: int, seed=None):

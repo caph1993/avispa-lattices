@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..base import Lattice, Poset, Relation
+    from .lattice import Lattice, Poset, Relation
 from typing import Sequence, Tuple
 
 

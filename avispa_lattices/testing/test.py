@@ -1,5 +1,5 @@
 from statistics import median_high
-from . import AL
+from .. import AL
 import timeit
 import numpy as np
 '''
@@ -58,26 +58,38 @@ def test_generation_and_f_iteration():
     return
 
 
+vpath = AL.new_visualizer()
 L = AL.random_lattice(6, seed=42)
 #help(L.f_iter)
-print(L.f_iter.methods)
+print(L.f_iter_lub)
+print(AL.github(L.f_iter_lub))
 print(L.f_glb.methods)
 print(AL.random_lattice.methods)
 print(AL.random_poset.methods)
-print(AL.enum.f_iter_methods)
-L.show()
+#print(AL.enum.f_iter_methods)
+png, txt = next(vpath)
+L.show(save=png)
+
 # for f in L.f_iter('all', n=3):
 #     print(f)
 # for f in L.f_iter('monotones', n=3):
 #     print(f)
 #     L.show(f)
-F = [f for f in L.f_iter('lub', n=30)]
+F = [f for f in L.f_iter_lub()]
 print(F[0], F[10], F[20], sep='\n')
-AL.graphviz.COLORS_CYCLE = ['darkblue', 'darkgreen', 'darkorange', 'darkred']
-L.show(F[0], F[10], L.f_lub(F[0], F[10]))
-L.show(F[0], F[10], L.f_lub(F[0], F[10]), L.f_glb(F[0], F[10]))
-L.show(F[0], F[10], L.f_lub(F[0], F[10]),
-       L.f_glb(F[0], F[10], method='pointwise'))
+custom_color_cycle = ['darkblue', 'darkgreen', 'darkorange', 'darkred']
+
+png, txt = next(vpath)
+L.show(F[0], F[10], L.f_lub(F[0], F[10]), save=png,
+       colors_cycle=custom_color_cycle)
+
+png, txt = next(vpath)
+L.show(F[0], F[10], L.f_lub(F[0], F[10]), L.f_glb(F[0], F[10]), save=png,
+       colors_cycle=custom_color_cycle)
+
+png, txt = next(vpath)
+L.show(F[0], F[10], L.f_lub(F[0], F[10]), L.f_glb_pointwise(F[0], F[10]),
+       save=png, colors_cycle=custom_color_cycle)
 
 
 def test_f_glb():
@@ -90,13 +102,13 @@ def test_f_glb():
     print(L.is_distributive)
     # for f in L.f_iter(method='monotones'):
     #     print(f)
-    for f in L.f_iter():
+    for f in L.f_iter_lub():
         print(f)
         print('HEY')
     return
 
 
-test_f_glb()
+#test_f_glb()
 # test_generation_and_f_iteration()
 # test_M3()
 # test_M5()
