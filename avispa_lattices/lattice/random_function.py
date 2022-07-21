@@ -67,15 +67,15 @@ def random_f_monotone_C(L: _Lattice, bottom_to_bottom: bool = False, seed=None):
     R = random_state(seed)
     f = partial_endomorphism(L.n)
     n_above = L.leq.sum(axis=1)
-    for i in L.toposort_bottom_up:
+    f[L.bottom] = L.bottom
+    start = 1 if bottom_to_bottom else 0
+    for i in L.toposort_bottom_up[start:]:
         f[i] = L.lub_of_many(f[k] for k in L.children[i])
-        if bottom_to_bottom and i == L.bottom:
-            continue
         while R.random() < 0.5 and L.parents[f[i]]:
             pa = L.parents[f[i]]
             p = n_above[pa]
             f[i] = R.choice(pa, p=p / p.sum())
-    assert L.f_is_monotone(f)
+    #assert L.f_is_monotone(f)
     return f
 
 
@@ -84,7 +84,7 @@ def random_f_lub(L: _Lattice, seed: Optional[int] = None, **kwargs):
 
 
 def random_f_lub_B(L: _Lattice, seed: Optional[int] = None):
-    f = L.random_f_monotone(seed)
+    f = L.random_f_monotone(seed, bottom_to_bottom=True)
     return fix_f_naive(L, f)
 
 
