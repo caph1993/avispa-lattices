@@ -18,13 +18,12 @@ def random_f_arbitrary(_: _Relation, seed=None):
 
 
 def random_f_monotone(P: _Poset, seed=None):
-    R = random_state(seed)
-    elems = np.arange(P.n)
-    R.shuffle(elems)
-    for i in elems:
-        # Choose f[i] without interfeering previous choices
-        pass
-    raise NotImplementedError()
+    f = random_f_arbitrary(P, seed=seed)
+    topo = P.toposort_bottom_up
+    rank = np.argsort(topo)
+    f[:] = [f[i] for i in np.argsort(rank[f])]
+    P.f_assert_is_monotone(f)
+    return f
 
 
 def random_f_monotone_A(L: _Lattice, seed=None,

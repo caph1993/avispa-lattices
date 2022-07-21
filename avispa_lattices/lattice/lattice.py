@@ -202,14 +202,16 @@ class Relation:
                     G[i].append(j)
         return Tarjan(G).tarjan()
 
-    def f_is_monotone(self, f: Endomorphism):
-        for i, j in _lt_pairs(self):
-            if not self.leq[f[i], f[j]]:
-                return False
-        return True
-
     @implemented_at(random_function.random_f_arbitrary)
     def random_f_arbitrary(self, *args, **kwargs):
+        ...
+
+    @implemented_at(function_iteration.f_is_monotone)
+    def f_is_monotone(self, *args, **kwargs):
+        ...
+
+    @implemented_at(function_iteration.f_assert_is_monotone)
+    def f_assert_is_monotone(self, *args, **kwargs):
         ...
 
 
@@ -497,16 +499,8 @@ class Lattice(Poset):
     def f_is_lub(self, *args, **kwargs):
         ...
 
-    @implemented_at(function_iteration.f_is_monotone)
-    def f_is_monotone(self, *args, **kwargs):
-        ...
-
     @implemented_at(function_iteration.f_assert_is_lub)
     def f_assert_is_lub(self, *args, **kwargs):
-        ...
-
-    @implemented_at(function_iteration.f_assert_is_monotone)
-    def f_assert_is_monotone(self, *args, **kwargs):
         ...
 
     @implemented_at(random_function.random_f_lub)

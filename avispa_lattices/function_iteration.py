@@ -33,7 +33,7 @@ def count_f_all(P: Poset):
     return P.n**P.n
 
 
-class F_NotMonotone(ValidationError):
+class NotMonotoneFunction(ValidationError):
     _message = 'f does not preserve order'
 
 
@@ -45,7 +45,7 @@ def f_assert_is_monotone(P: Poset, f, domain: Optional[Sequence[int]] = None):
     for i in domain:
         for j in domain:
             if leq[i, j] and not leq[f[i], f[j]]:
-                raise F_NotMonotone(P, f'{f}, {i} {j}')
+                raise NotMonotoneFunction(P, f'{f}, {i} {j}', f=f)
     return
 
 
@@ -117,7 +117,8 @@ def f_iter_monotones(L: Lattice, bottom_to_bottom: bool = False,
                      in_place: bool = False):
     'all monotone functions'
     if not in_place:
-        yield from _cast(f_iter_monotones(L, bottom_to_bottom, in_place=True))
+        yield from post(f_iter_monotones(L, bottom_to_bottom, in_place=True),
+                        in_place=False)
         return
     # Shortcuts
     n = L.n
@@ -192,38 +193,20 @@ def _f_iter_monotones_restricted(
 '''
 
 
-def f_iter_irreducibles_monotone(self: Lattice, bottom_to_bottom: bool = False):
+def f_iter_irreducibles_monotone(self: Lattice, bottom_to_bottom: bool = True,
+                                 in_place: bool = False):
     'all functions given by f[non_irr]=lub(f[irreducibles] below non_irr)'
     if bottom_to_bottom:
-        yield from f_iter_irreducibles_monotone_bottom(self)
+        yield from f_iter_irreducibles_monotone_bottom(self, in_place)
     else:
-        yield from f_iter_irreducibles_monotone_no_bottom(self)
-
-
-def f_iter_irreducibles_monotone_no_bottom(self: Lattice):
-    'all functions given by f[non_irr]=lub(f[irreducibles] below non_irr) and'
-    'f[bottom] = any below or equal to glb(f[irreducibles])'
-    n = self.n
-    if n == 0:
-        return
-    glb = self.glb
-    leq = self.leq
-    below = [[i for i in range(n) if leq[i, j]] for j in range(n)]
-    bottom = self.bottom
-    irreducibles = self.irreducibles
-    for f in f_iter_irreducibles_monotone_bottom(self,):
-        _glb_f = (lambda acum, b: glb[acum, f[b]])
-        glb_f = lambda elems: reduce(_glb_f, elems, self.top)
-        for i in below[glb_f(irreducibles)]:
-            f[bottom] = i
-            yield f
+        yield from f_iter_irreducibles_monotone_no_bottom(self, in_place)
 
 
 def f_iter_irreducibles_monotone_bottom(
-        self: Lattice) -> Iterable[Endomorphism]:
+        self: Lattice, in_place: bool = False) -> Iterable[Endomorphism]:
     'all functions given by f[non_irr]=lub(f[irreducibles] below non_irr)'
     if self.n == 0:
-        return
+        return iter(())
     n = self.n
     leq = self.leq
     geq_list = [[j for j in range(n) if leq[i, j]] for i in range(n)]
@@ -241,7 +224,32 @@ def f_iter_irreducibles_monotone_bottom(
                 yield from backtrack(i + 1)
 
     funcs = backtrack(0)
-    yield from _cast(_extrapolate_funcs(self, funcs, self.irreducibles))
+    funcs = _extrapolate_funcs(self, funcs, self.irreducibles)
+    return post(funcs, in_place)
+
+
+def f_iter_irreducibles_monotone_no_bottom(self: Lattice,
+                                           in_place: bool = False):
+    'all functions given by f[non_irr]=lub(f[irreducibles] below non_irr) and'
+    'f[bottom] = any below or equal to glb(f[irreducibles])'
+    n = self.n
+    if n == 0:
+        return iter(())
+    glb = self.glb
+    leq = self.leq
+    below = [[i for i in range(n) if leq[i, j]] for j in range(n)]
+    bottom = self.bottom
+    irreducibles = self.irreducibles
+
+    def gen():
+        for f in f_iter_irreducibles_monotone_bottom(self,):
+            _glb_f = (lambda acum, b: glb[acum, f[b]])
+            glb_f = lambda elems: reduce(_glb_f, elems, self.top)
+            for i in below[glb_f(irreducibles)]:
+                f[bottom] = i
+                yield f
+
+    return post(gen(), in_place)
 
 
 def _extrapolate_funcs(self: Lattice, funcs: Iterable[PartialEndomorphism],
@@ -266,9 +274,10 @@ def _extrapolate_funcs(self: Lattice, funcs: Iterable[PartialEndomorphism],
 '''
 
 
-def f_iter_lub_distributive(self: Lattice, bottom_to_bottom: bool = True):
+def f_iter_lub_distributive(self: Lattice, bottom_to_bottom: bool = True,
+                            in_place: bool = False):
     'all functions that preserve lubs for sets'
-    yield from f_iter_irreducibles_monotone(self, bottom_to_bottom)
+    yield from f_iter_irreducibles_monotone(self, bottom_to_bottom, in_place)
 
 
 def count_f_lub_distributive(L: Lattice, check: bool = False):
@@ -317,23 +326,25 @@ def f_is_lub_of_irreducibles(self: Lattice, f):
 '''
 
 
-def f_iter_lub(self: Lattice, bottom_to_bottom: bool = True):
+def f_iter_lub(self: Lattice, bottom_to_bottom: bool = True,
+               in_place: bool = False):
     if self.is_distributive:
-        yield from f_iter_lub_distributive(self, bottom_to_bottom)
+        yield from f_iter_lub_distributive(self, bottom_to_bottom, in_place)
     else:
-        yield from f_iter_lub_bruteforce(self, bottom_to_bottom)
+        yield from f_iter_lub_bruteforce(self, bottom_to_bottom, in_place)
     return
 
 
-def f_iter_lub_bruteforce(self: Lattice, bottom_to_bottom: bool = True):
+def f_iter_lub_bruteforce(self: Lattice, bottom_to_bottom: bool = True,
+                          in_place: bool = False):
     'all space functions. Throws if no bottom'
-    for f in f_iter_monotones(self, bottom_to_bottom):
+    for f in f_iter_monotones(self, bottom_to_bottom, in_place=in_place):
         if f_is_lub(self, f, bottom_to_bottom=bottom_to_bottom):
             yield f
     return
 
 
-class F_NotLUB(ValidationError):
+class NotLUBFunction(ValidationError):
     _message = 'f does not preserve lub'
 
 
@@ -354,16 +365,18 @@ def f_assert_is_lub(self: Lattice, f: Endomorphism, bottom_to_bottom=True,
         # Check bottom
         bot = self.bottom
         if f[bot] != bot or (domain is not None and bot not in domain):
-            raise F_NotLUB(self, f'f[bottom] = f[{bot}] != {bot} = bottom')
+            raise NotLUBFunction(self,
+                                 f'f[bottom] = f[{bot}] != {bot} = bottom')
     # Check all pairs
     lub = self.lub
     domain = range(n) if domain is None else domain
     for i in domain:
         for j in domain:
             if f[lub[i, j]] != lub[f[i], f[j]]:
-                raise F_NotLUB(
+                raise NotLUBFunction(
                     self,
-                    f'f[lub[{i},{j}]] = f[{lub[i,j]}] = {f[lub[i,j]]} != {lub[f[i],f[j]]} = lub[{f[i]},{f[j]}] = lub[f[{i}],f[{j}]]'
+                    f'f[lub[{i},{j}]] = f[{lub[i,j]}] = {f[lub[i,j]]} != {lub[f[i],f[j]]} = lub[{f[i]},{f[j]}] = lub[f[{i}],f[{j}]]',
+                    f=f,
                 )
     return
 
@@ -378,7 +391,7 @@ def f_is_lub(self: Lattice, f: Endomorphism, bottom_to_bottom=True,
     '''
     try:
         f_assert_is_lub(self, f, bottom_to_bottom, domain)
-    except F_NotLUB:
+    except NotLUBFunction:
         return False
     return True
 

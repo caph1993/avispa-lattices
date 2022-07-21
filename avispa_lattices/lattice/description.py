@@ -17,7 +17,7 @@ def describe(P: Poset):
     # else:
     #     print(f'# bottoms: {len(bottoms(P))}')
     #     print(f'# tops: {len(tops(P))}')
-    P.show()
+    #P.show()
     return
 
 

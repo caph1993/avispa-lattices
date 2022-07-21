@@ -2,8 +2,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Callable, List, Optional, TypeVar, Union, overload
 import itertools
 
+from .._function_types import Endomorphism
+from ..visualization.gui import new_visualizer
+
 if TYPE_CHECKING:
-    from .lattice import Lattice, Poset, Relation
+    from .lattice import Lattice as _Lattice, Poset as _Poset, Relation as _Relation
 
 import numpy as np
 
@@ -14,20 +17,29 @@ class ValidationError(AssertionError):
 
     _message = 'Validation failed'
 
-    def __init__(self, X: Relation, why_false: str):
-        super().__init__(X, why_false)
-        assert self.args == (X, why_false)
+    def __init__(self, X: _Relation, why_false: str,
+                 f: Optional[Endomorphism] = None):
+        super().__init__(X, why_false, f)
+        assert self.args == (X, why_false, f)
 
     def __str__(self):
-        X: Relation
+        X: _Relation
         why_false: str
-        X, why_false = self.args
+        f: Optional[Endomorphism]
+        X, why_false, f = self.args
+        message = lambda: f'{X._description()}\n\nISSUE: {self._message}\n\nRaised because:\n{why_false}'
         if hasattr(X, 'show'):
-            X.show()  # type:ignore
-        return f'{X._description()}\n\nISSUE: {self._message}\n\nRaised because:\n{why_false}'
+            try:
+                vpath = new_visualizer('Validation error')
+                vpath.txt().write_text(message())
+                funcs = [] if f is None else [f]
+                X.show(*funcs, save=vpath.png())  # type: ignore
+            except:
+                pass
+        return message()
 
     @classmethod
-    def assert_false(cls, X: Relation, why_false: Union[str, int, None]):
+    def assert_false(cls, X: _Relation, why_false: Union[str, int, None]):
         if why_false:
             assert isinstance(why_false, str), why_false
             raise cls(X, why_false)
@@ -55,7 +67,7 @@ class MatrixFormatError(ValidationError):
     _message = 'Given matrix relation has incorrect format'
 
 
-def validate_matrix_format(R: Relation):
+def validate_matrix_format(R: _Relation):
     rel = R.leq
     try:
         shape = tuple(rel.shape)
@@ -94,14 +106,14 @@ class NotAntisymmetric(NotPosetError):
                 'There is a cycle')
 
 
-def assert_is_reflexive(R: Relation):
+def assert_is_reflexive(R: _Relation):
     rel = R.leq
     I, = np.where(~rel[np.diag_indices_from(rel)])
     why = I.size and f'Not reflexive: rel[{I[0]},{I[0]}] is False'
     NotReflexive.assert_false(R, why)
 
 
-def assert_is_antisymmetric(R: Relation):
+def assert_is_antisymmetric(R: _Relation):
     rel = R.leq
     eye = np.identity(R.n, dtype=np.bool_)
     I, J = np.where(rel & rel.T & ~eye)
@@ -109,7 +121,7 @@ def assert_is_antisymmetric(R: Relation):
     NotAntisymmetric.assert_false(R, why)
 
 
-def assert_is_transitive(R: Relation):
+def assert_is_transitive(R: _Relation):
     rel = R.leq
     rel2 = np.matmul(rel, rel)
     I, J = np.where(((~rel) & rel2))
@@ -118,22 +130,22 @@ def assert_is_transitive(R: Relation):
     NotTransitive.assert_false(R, why)
 
 
-def is_reflexive(R: Relation):
+def is_reflexive(R: _Relation):
     method = lambda: assert_is_reflexive(R)
     return ValidationError.capture(method)
 
 
-def is_antisymmetric(R: Relation):
+def is_antisymmetric(R: _Relation):
     method = lambda: assert_is_antisymmetric(R)
     return ValidationError.capture(method)
 
 
-def is_transitive(R: Relation):
+def is_transitive(R: _Relation):
     method = lambda: assert_is_transitive(R)
     return ValidationError.capture(method)
 
 
-def assert_is_poset(P: Poset):
+def assert_is_poset(P: _Poset):
     assert_is_reflexive(P)
     assert_is_antisymmetric(P)
     assert_is_transitive(P)
@@ -159,7 +171,7 @@ class LUB_Inconsistency(ValidationError):
         self.args = (i, j)
 
 
-def assert_is_lattice(L: Lattice):
+def assert_is_lattice(L: _Lattice):
     if L.n == 0:
         return
     try:  # check if duck says quack
@@ -200,13 +212,13 @@ class NotUniqueTop(NotComplete):
     _message = 'Given poset has multiple top elements (or none)'
 
 
-def expect_unique_bottom(P: Poset):
+def expect_unique_bottom(P: _Poset):
     if not P.bottoms or len(P.bottoms) > 1:
         raise NotUniqueBottom(P, f'Bottoms found: {P.bottoms}')
     return P.bottoms[0]
 
 
-def expect_unique_top(P: Poset):
+def expect_unique_top(P: _Poset):
     if not P.tops or len(P.tops) > 1:
         raise NotUniqueBottom(P, f'Tops found: {P.tops}')
     return P.tops[0]
@@ -216,7 +228,7 @@ class NotDistributive(ValidationError):
     _message = 'Given lattice is not distributive'
 
 
-def assert_is_distributive(self: Lattice):
+def assert_is_distributive(self: _Lattice):
     'Find i, j, k that violate distributivity. None otherwise'
     n = self.n
     lub = self.lub
@@ -237,7 +249,7 @@ class NotModular(ValidationError):
     _message = 'Given lattice is not distributive'
 
 
-def assert_is_modular(self: Lattice):
+def assert_is_modular(self: _Lattice):
     'Find i, j, k that violate modularity. None otherwise'
     n = self.n
     leq = self.leq

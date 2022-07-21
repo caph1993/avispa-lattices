@@ -1,7 +1,7 @@
 from __future__ import annotations
+from itertools import islice
 from pathlib import Path
-import random
-import traceback
+import random, time, traceback
 import platform, subprocess, webbrowser
 from tempfile import TemporaryDirectory
 from typing import Any, Iterable, Iterator, List, Optional, Tuple, Union, cast
@@ -49,12 +49,15 @@ def main():
         description='Display images of current directory in a GUI with slider',
     )
     parser.add_argument('--title', type=str, default=None, help='Window title')
+    parser.add_argument(
+        '--open_empty', action='store_true', default=False,
+        help='Launch immediately even if the folder is still empty')
     parsed = parser.parse_args()
     try:
         with open('stdout.log', 'w') as f, open('stderr.log', 'w') as g:
             sys.stdout = f
             sys.stderr = g
-            main_GUI(parsed.title)
+            main_GUI(parsed.title, parsed.open_empty)
     except Exception as e:
         sg.popup_error(f'{e}\n\n{traceback.format_exc()}')
     finally:
@@ -69,9 +72,12 @@ def main():
     return
 
 
-def main_GUI(title: Optional[str]):
+def main_GUI(title: Optional[str], open_empty: bool = False):
     cwd = Path('.').absolute()
     title = title or 'Image Viewer'
+    if not open_empty:
+        while list(islice(cwd.glob('*.png'), 0, 1)) == []:
+            time.sleep(0.1)
     layout = [
         [
             sg.Text('Scanning'),
@@ -203,6 +209,7 @@ class VisualizerPath(Path, Iterator[Tuple[Path, Path]]):
 def new_visualizer(
     title: Optional[str] = None,
     tmp_dir: Optional[Path] = None,
+    open_empty: bool = False,
 ):
     if tmp_dir is None:
         tmp_dir = Path(TemporaryDirectory(prefix=TMP_PREFIX).name)
@@ -210,6 +217,7 @@ def new_visualizer(
     else:
         assert tmp_dir.is_dir(), tmp_dir
     args = [] if title is None else ['--title', title]
+    args += [] if not open_empty else ['--open_empty']
     Popen([sys.executable, __file__, *args], cwd=tmp_dir)
     return VisualizerPath(tmp_dir)
 
