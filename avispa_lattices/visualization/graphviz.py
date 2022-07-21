@@ -113,7 +113,7 @@ def show(P: Poset, *functions: PartialEndomorphism, method='auto', labels=None,
 
     colors = itertools.cycle(
         colors_cycle or
-        ['darkgreen', 'darkblue', 'darkred', 'darkorange', 'darkviolet'])
+        ['dodgerblue', 'darkorange', 'dodgerblue', 'darkred', 'darkviolet'])
 
     for f in functions:
         extra_edges.append((next(colors), f_edges(f)))

@@ -358,7 +358,7 @@ class Poset(Relation):
     def f_iter_monotones(self, *args, **kwargs):
         ...
 
-    @implemented_at(random_function.random_f_monotone)
+    @implemented_at(random_function.random_f_monotone_poset)
     def random_f_monotone(self, *args, **kwargs):
         ...
 
@@ -489,6 +489,10 @@ class Lattice(Poset):
 
     @implemented_at(function_iteration.f_iter_monotones)
     def f_iter_monotones(self, *args, **kwargs):
+        ...
+
+    @implemented_at(random_function.random_f_monotone)
+    def random_f_monotone(self, *args, **kwargs):
         ...
 
     @implemented_at(function_iteration.f_iter_lub)

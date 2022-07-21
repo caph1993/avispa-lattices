@@ -4,26 +4,25 @@ import numpy as np
 from ..utils.random_state import random_state
 from ..function_operations import fix_f_naive
 from .. import _enum as AL_enum
-from .._function_types import Endomorphism
+from .._function_types import Endomorphism, partial_endomorphism
 
 if TYPE_CHECKING:
     from .lattice import Lattice as _Lattice, Poset as _Poset, Relation as _Relation
 
 
-def random_f_arbitrary(_: _Relation, seed=None):
+def random_f_arbitrary(_: _Relation, seed=None) -> Endomorphism:
     n = _.n
     R = random_state(seed)
     f: Endomorphism = list(R.randint(0, n, n))
     return f
 
 
-def random_f_monotone(P: _Poset, seed=None):
-    f = random_f_arbitrary(P, seed=seed)
-    topo = P.toposort_bottom_up
-    rank = np.argsort(topo)
-    f[:] = [f[i] for i in np.argsort(rank[f])]
-    P.f_assert_is_monotone(f)
-    return f
+def random_f_monotone_poset(P: _Poset, seed=None) -> Endomorphism:
+    raise NotImplementedError()
+
+
+def random_f_monotone(L: _Lattice, seed=None, **kwargs) -> Endomorphism:
+    return random_f_monotone_C(L, seed=seed, **kwargs)
 
 
 def random_f_monotone_A(L: _Lattice, seed=None,
@@ -64,7 +63,33 @@ def random_f_monotone_B(L: _Lattice, seed=None):
     return f
 
 
-def random_f_lub(L: _Lattice, seed: Optional[int] = None, complexity_budget=5):
+def random_f_monotone_C(L: _Lattice, bottom_to_bottom: bool = False, seed=None):
+    R = random_state(seed)
+    f = partial_endomorphism(L.n)
+    n_above = L.leq.sum(axis=1)
+    for i in L.toposort_bottom_up:
+        f[i] = L.lub_of_many(f[k] for k in L.children[i])
+        if bottom_to_bottom and i == L.bottom:
+            continue
+        while R.random() < 0.5 and L.parents[f[i]]:
+            pa = L.parents[f[i]]
+            p = n_above[pa]
+            f[i] = R.choice(pa, p=p / p.sum())
+    assert L.f_is_monotone(f)
+    return f
+
+
+def random_f_lub(L: _Lattice, seed: Optional[int] = None, **kwargs):
+    return random_f_lub_B(L, seed=seed, **kwargs)
+
+
+def random_f_lub_B(L: _Lattice, seed: Optional[int] = None):
+    f = L.random_f_monotone(seed)
+    return fix_f_naive(L, f)
+
+
+def random_f_lub_A(L: _Lattice, seed: Optional[int] = None,
+                   complexity_budget=5):
     f = _random_f_preserving_lub(L, seed=seed)
     if complexity_budget == 0:
         return f
@@ -88,27 +113,3 @@ def _random_f_preserving_lub(L: _Lattice, seed: Optional[int] = None):
     for i, fi in zip(I, R.choice(elems, len(I), p=p_above)):
         f[i] = fi
     return fix_f_naive(L, f)
-
-
-def random_f(L: _Lattice, seed: Optional[int] = None,
-             method: AL_enum.random_f_method = 'auto', **kwargs):
-    if method == 'auto':
-        method = 'arbitrary'
-    if method == 'monotone':
-        method = 'monotone_A'
-    f: Endomorphism
-    if method == 'arbitrary':
-        R = random_state(seed)
-        f = list(R.randint(0, L.n, L.n))
-    elif method == 'lub':
-        f = random_f_lub(L, seed=seed, **kwargs)
-    elif method == 'monotone_A':
-        f = random_f_monotone_A(L, seed=seed, **kwargs)
-    elif method == 'monotone_B':
-        f = random_f_monotone_B(L, seed=seed, **kwargs)
-    else:
-        raise NotImplementedError(f'{method} not in {AL_enum.random_f_methods}')
-    return f
-
-
-random_f.methods = AL_enum.random_f_methods
