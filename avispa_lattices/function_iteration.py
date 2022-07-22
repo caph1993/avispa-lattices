@@ -3,19 +3,19 @@ from functools import reduce
 from optparse import Option
 from typing import TYPE_CHECKING, Any, Generator, Iterable, Iterator, Optional, Tuple, Union, cast, List, Sequence
 from typing_extensions import Literal, get_args as literal_args
-from ._function_types import PartialEndomorphism, Endomorphism, partial_endomorphism
+from .utils._function_types import PartialEndomorphism, Endomorphism, partial_endomorphism
 from .utils.iterators import product_list
 from itertools import islice
-from . import _enum as AL_enum
+from .utils import _enum as AL_enum
 from .lattice.validation import ValidationError
 
 if TYPE_CHECKING:
-    from . import Poset, Lattice
+    from .lattice.lattice import Poset as _Poset, Lattice as _Lattice
 
-# @section: Poset iteration
+# @section: _Poset iteration
 
 
-def f_iter_all_poset(P: Poset, in_place: bool = False):
+def f_iter_all_poset(P: _Poset, in_place: bool = False):
     'all endomorphisms'
     out = product_list(range(P.n), repeat=P.n)
     yield from post(out, in_place)
@@ -29,7 +29,7 @@ def post(iterator: Iterable[Endomorphism],
         yield from (f.copy() for f in iterator)
 
 
-def count_f_all(P: Poset):
+def count_f_all(P: _Poset):
     return P.n**P.n
 
 
@@ -37,7 +37,7 @@ class NotMonotoneFunction(ValidationError):
     _message = 'f does not preserve order'
 
 
-def f_assert_is_monotone(P: Poset, f, domain: Optional[Sequence[int]] = None):
+def f_assert_is_monotone(P: _Poset, f, domain: Optional[Sequence[int]] = None):
     'check if f is monotone over domain'
     n = P.n
     domain = range(n) if domain is None else domain
@@ -49,7 +49,7 @@ def f_assert_is_monotone(P: Poset, f, domain: Optional[Sequence[int]] = None):
     return
 
 
-def f_is_monotone(P: Poset, f, domain: Optional[Sequence[int]] = None):
+def f_is_monotone(P: _Poset, f, domain: Optional[Sequence[int]] = None):
     'check if f is monotone over domain'
     n = P.n
     domain = range(n) if domain is None else domain
@@ -61,7 +61,7 @@ def f_is_monotone(P: Poset, f, domain: Optional[Sequence[int]] = None):
     return True
 
 
-def f_iter_monotones_poset(P: Poset, in_place: bool = False):
+def f_iter_monotones_poset(P: _Poset, in_place: bool = False):
     'all monotone functions'
     for f in f_iter_all_poset(P, in_place):
         if f_is_monotone(P, f):
@@ -72,7 +72,7 @@ def f_iter_monotones_poset(P: Poset, in_place: bool = False):
 # @section: all endomorphisms and bottom-endomorphism of a poset
 
 
-def f_iter_all(L: Lattice, bottom_to_bottom: bool = False,
+def f_iter_all(L: _Lattice, bottom_to_bottom: bool = False,
                in_place: bool = False):
     'all endomorphisms f with f[bottom]=bottom'
     n = L.n
@@ -90,11 +90,11 @@ def f_iter_all(L: Lattice, bottom_to_bottom: bool = False,
         yield from f_iter_all_poset(L, in_place)
 
 
-def count_f_all_bottom(L: Lattice):
+def count_f_all_bottom(L: _Lattice):
     return L.n**(L.n - 1)
 
 
-def test_f_iter_all_bottom(L: Lattice):
+def test_f_iter_all_bottom(L: _Lattice):
     if L.n == 0:
         return
     bot = L.bottom
@@ -106,14 +106,14 @@ def test_f_iter_all_bottom(L: Lattice):
 
 
 # @section: all monotones and bottom-monotones of a poset (bruteforce)
-# def f_iter_monotones_bottom_bruteforce(self: Lattice, in_place: bool = False):
+# def f_iter_monotones_bottom_bruteforce(self: _Lattice, in_place: bool = False):
 #     'all monotone functions with f[bottom]=bottom'
 #     return
 
 # @section: all monotones and bottom-monotones of a lattice
 
 
-def f_iter_monotones(L: Lattice, bottom_to_bottom: bool = False,
+def f_iter_monotones(L: _Lattice, bottom_to_bottom: bool = False,
                      in_place: bool = False):
     'all monotone functions'
     if not in_place:
@@ -154,7 +154,7 @@ def _cast(it: Iterator[PartialEndomorphism]):
 
 
 def _f_iter_monotones_restricted(
-    self: Lattice,
+    self: _Lattice,
     f: PartialEndomorphism,
     topo: List[int],
     children: List[List[int]],
@@ -193,7 +193,7 @@ def _f_iter_monotones_restricted(
 '''
 
 
-def f_iter_irreducibles_monotone(self: Lattice, bottom_to_bottom: bool = True,
+def f_iter_irreducibles_monotone(self: _Lattice, bottom_to_bottom: bool = True,
                                  in_place: bool = False):
     'all functions given by f[non_irr]=lub(f[irreducibles] below non_irr)'
     if bottom_to_bottom:
@@ -203,7 +203,7 @@ def f_iter_irreducibles_monotone(self: Lattice, bottom_to_bottom: bool = True,
 
 
 def f_iter_irreducibles_monotone_bottom(
-        self: Lattice, in_place: bool = False) -> Iterable[Endomorphism]:
+        self: _Lattice, in_place: bool = False) -> Iterable[Endomorphism]:
     'all functions given by f[non_irr]=lub(f[irreducibles] below non_irr)'
     if self.n == 0:
         return iter(())
@@ -228,7 +228,7 @@ def f_iter_irreducibles_monotone_bottom(
     return post(funcs, in_place)
 
 
-def f_iter_irreducibles_monotone_no_bottom(self: Lattice,
+def f_iter_irreducibles_monotone_no_bottom(self: _Lattice,
                                            in_place: bool = False):
     'all functions given by f[non_irr]=lub(f[irreducibles] below non_irr) and'
     'f[bottom] = any below or equal to glb(f[irreducibles])'
@@ -252,7 +252,7 @@ def f_iter_irreducibles_monotone_no_bottom(self: Lattice,
     return post(gen(), in_place)
 
 
-def _extrapolate_funcs(self: Lattice, funcs: Iterable[PartialEndomorphism],
+def _extrapolate_funcs(self: _Lattice, funcs: Iterable[PartialEndomorphism],
                        domain: Iterable[int]):
     'extend each f in funcs outside domain using f[j]=lub(f[i] if i<=j and i in domain)'
     n = self.n
@@ -274,13 +274,13 @@ def _extrapolate_funcs(self: Lattice, funcs: Iterable[PartialEndomorphism],
 '''
 
 
-def f_iter_lub_distributive(self: Lattice, bottom_to_bottom: bool = True,
+def f_iter_lub_distributive(self: _Lattice, bottom_to_bottom: bool = True,
                             in_place: bool = False):
     'all functions that preserve lubs for sets'
     yield from f_iter_irreducibles_monotone(self, bottom_to_bottom, in_place)
 
 
-def count_f_lub_distributive(L: Lattice, check: bool = False):
+def count_f_lub_distributive(L: _Lattice, check: bool = False):
     '''
     This function assumes that L is distributive
     '''
@@ -304,7 +304,7 @@ def count_f_lub_distributive(L: Lattice, check: bool = False):
     return reduce(lambda a, b: a * b, k_independent, 1)
 
 
-def f_is_lub_of_irreducibles(self: Lattice, f):
+def f_is_lub_of_irreducibles(self: _Lattice, f):
     '''
     check if f satisfies for all x in range(n) that
         f(x) == self.set_lub(*[f[i] for i in I(x)])
@@ -326,7 +326,7 @@ def f_is_lub_of_irreducibles(self: Lattice, f):
 '''
 
 
-def f_iter_lub(self: Lattice, bottom_to_bottom: bool = True,
+def f_iter_lub(self: _Lattice, bottom_to_bottom: bool = True,
                in_place: bool = False):
     if self.is_distributive:
         yield from f_iter_lub_distributive(self, bottom_to_bottom, in_place)
@@ -335,7 +335,7 @@ def f_iter_lub(self: Lattice, bottom_to_bottom: bool = True,
     return
 
 
-def f_iter_lub_bruteforce(self: Lattice, bottom_to_bottom: bool = True,
+def f_iter_lub_bruteforce(self: _Lattice, bottom_to_bottom: bool = True,
                           in_place: bool = False):
     'all space functions. Throws if no bottom'
     for f in f_iter_monotones(self, bottom_to_bottom, in_place=in_place):
@@ -348,7 +348,7 @@ class NotLUBFunction(ValidationError):
     _message = 'f does not preserve lub'
 
 
-def f_assert_is_lub(self: Lattice, f: Endomorphism, bottom_to_bottom=True,
+def f_assert_is_lub(self: _Lattice, f: Endomorphism, bottom_to_bottom=True,
                     domain=None):
     '''
 
@@ -381,7 +381,7 @@ def f_assert_is_lub(self: Lattice, f: Endomorphism, bottom_to_bottom=True,
     return
 
 
-def f_is_lub(self: Lattice, f: Endomorphism, bottom_to_bottom=True,
+def f_is_lub(self: _Lattice, f: Endomorphism, bottom_to_bottom=True,
              domain=None):
     '''
     check if f preserves lubs for all pairs:
@@ -396,7 +396,7 @@ def f_is_lub(self: Lattice, f: Endomorphism, bottom_to_bottom=True,
     return True
 
 
-def f_iter_lub_no_bottom(self: Lattice):
+def f_iter_lub_no_bottom(self: _Lattice):
     'all functions that statisfy f_is_lub'
     it = f_iter_irreducibles_monotone_no_bottom(self,)
     if self.is_distributive:

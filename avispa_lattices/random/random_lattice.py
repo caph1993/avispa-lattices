@@ -1,30 +1,13 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple
+from typing import Optional
 import numpy as np
-from ..package_info import version_is_at_least
 from ..utils.algorithm_floyd_warshall import transitive_closure
 from . import czech_algorithm
 from ..utils.random_state import random_state
-from ..lattice.lattice import Lattice, Poset, Relation
-from ..function_operations import fix_f_naive
-from .. import _enum as AL_enum
-from .._function_types import Endomorphism
+from ..lattice.lattice import Lattice, Poset
 
 
-def random_poset(n: int, seed: Optional[int] = None,
-                 method: AL_enum.random_poset_method = 'auto', **kwargs):
-    if method == 'auto':
-        method = 'p_threshold'
-
-    if method == 'p_threshold':
-        return random_poset_p(n, seed=seed, **kwargs)
-    raise NotImplementedError(f'{method} not in {AL_enum.random_poset_method}')
-
-
-random_poset.methods = AL_enum.random_poset_methods
-
-
-def random_poset_p(n: int, p: float, seed: Optional[int] = None):
+def random_poset(n: int, p: float, seed: Optional[int] = None):
     '''
     Generates a random poset.
     All posets (modulo labels) have positive probability of being generated.
@@ -44,7 +27,7 @@ def random_poset_p(n: int, p: float, seed: Optional[int] = None):
     return Poset(leq, check=True)
 
 
-def random_lattice_czech(n: int, seed: Optional[int] = None):
+def random_lattice(n: int, seed: Optional[int] = None):
     '''
     Description: http://ka.karlin.mff.cuni.cz/jezek/093/random.pdf
     The original algorithm had three errors and was modified in this
@@ -62,19 +45,3 @@ def random_lattice_czech(n: int, seed: Optional[int] = None):
         leq.flags.writeable = False
         L = Lattice(leq, check=False)
     return L
-
-
-def random_lattice(n: int, seed: Optional[int] = None,
-                   method: AL_enum.random_lattice_method = 'auto', **kwargs):
-    if method == 'auto':
-        if version_is_at_least('3.0.6'):
-            method = 'Czech'
-        else:
-            method = 'Czech'
-    if method == 'Czech':
-        return random_lattice_czech(n, seed, **kwargs)
-    raise NotImplementedError(
-        f'{method} not in {AL_enum.random_lattice_methods}')
-
-
-random_lattice.methods = AL_enum.random_lattice_methods

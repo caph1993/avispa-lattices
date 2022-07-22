@@ -4,8 +4,8 @@ import itertools
 from typing import TYPE_CHECKING, Iterable, List, Optional, Sequence, Tuple, Union, cast
 from collections import deque
 from .package_info import version_is_at_least
-from . import _enum as AL_enum
-from ._function_types import Endomorphism, PartialEndomorphism
+from .utils import _enum as AL_enum
+from .utils._function_types import Endomorphism, PartialEndomorphism
 
 if TYPE_CHECKING:
     from .lattice.lattice import Lattice, Poset, Relation

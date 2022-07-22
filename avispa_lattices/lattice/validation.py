@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Callable, List, Optional, TypeVar, Union, overload
 import itertools
 
-from .._function_types import Endomorphism
+from ..utils._function_types import Endomorphism
 from ..visualization.gui import new_visualizer
 
 if TYPE_CHECKING:
@@ -250,6 +250,10 @@ class NotModular(ValidationError):
 
 
 def assert_is_modular(self: _Lattice):
+    return assert_is_modular_B(self)
+
+
+def assert_is_modular_A(self: _Lattice):
     'Find i, j, k that violate modularity. None otherwise'
     n = self.n
     leq = self.leq
@@ -262,6 +266,32 @@ def assert_is_modular(self: _Lattice):
                    f'{lub[i,glb[j,k]]}  !=  {glb[lub[i,j],k]}  =  '
                    f'{lub[i,j]} glb {k}  =  (({i} lub {j}) glb {k})')
             raise NotModular(self, msg)
+    return
+
+
+def assert_is_modular_B(self: _Lattice):
+    '''
+    Dilworth, R. P. (1954), "Proof of a conjecture on finite modular lattices", Annals of Mathematics.
+    A lattice L is modular if and only if, for any a, b, c in L,
+        ((c leq a) and (a glb b = c glb b) and (a lub b = c lub b))
+        implies
+        (a = c)
+    Rephrased, iff for every c, a in L with (c leq a),
+        there is b with (a glb b = c glb b) and (a lub b = c lub b))
+        if and only if
+        (a = c)
+    Rephrased and noticing that when a==c, b exists trivially, this becomes
+    iff for every c, a in L with (c lt a),
+        there is no b with (a glb b = c glb b) and (a lub b = c lub b))
+    '''
+    n, lub, glb, asc = self.n, self.lub, self.glb, self.ascendants
+    for c in range(n):
+        for a in asc[c][1:]:
+            mask = (glb[a, :] == glb[c, :]) & (lub[a, :] == lub[c, :])
+            if np.any(mask):
+                b, *_ = np.nonzero(mask)
+                raise NotModular(
+                    self, f'glb and lub are equal for {a} and {c} at {b}')
     return
 
 

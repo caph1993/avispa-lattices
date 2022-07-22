@@ -30,23 +30,6 @@ def test_M5():
     return
 
 
-def test_generation_until_7():
-    non_mod = []
-    mod = []
-    dist = []
-    for L in AL.iter_all_lattices(7):
-        if L.is_distributive:
-            dist.append(L)
-        elif L.is_modular:
-            mod.append(L)
-        else:
-            non_mod.append(L)
-
-    assert len(dist) == 22
-    assert len(mod) == 12
-    assert len(non_mod) == 45
-
-
 def test_generation_and_f_iteration():
     R = np.random.RandomState(12382332)
     seeds = R.randint(0, np.iinfo(np.int32).min, size=100)

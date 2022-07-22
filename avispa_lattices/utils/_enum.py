@@ -1,5 +1,6 @@
-from typing_extensions import Literal, get_args as literal_args
-from typing import Tuple
+import functools
+from typing_extensions import Literal, Protocol, get_args as literal_args
+from typing import Callable, Tuple, Type, TypeVar, TypedDict
 
 f_glb_method = Literal['auto', 'GMeet', 'GMeet+', 'DMeet+', 'JMeet', 'CMeet',]
 f_glb_methods: Tuple[str] = literal_args(f_glb_method)

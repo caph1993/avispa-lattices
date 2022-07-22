@@ -16,7 +16,7 @@ def main():
     '''
     os.chdir(work_dir)
 
-    VERSION = '3.0.28'
+    VERSION = '3.0.29'
     PACKAGES = find_packages()
     REQUIREMENTS = find_requirements()
 

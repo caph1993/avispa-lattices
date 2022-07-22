@@ -1,10 +1,12 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple
+from functools import wraps
+from typing import TYPE_CHECKING, Any, Callable, Iterable, List, Optional, Tuple, TypeVar
+from typing_extensions import Protocol
 import numpy as np
 from ..utils.random_state import random_state
 from ..function_operations import fix_f_naive
-from .. import _enum as AL_enum
-from .._function_types import Endomorphism, partial_endomorphism
+from ..utils import _enum as AL_enum
+from ..utils._function_types import Endomorphism, partial_endomorphism
 
 if TYPE_CHECKING:
     from .lattice import Lattice as _Lattice, Poset as _Poset, Relation as _Relation
@@ -77,6 +79,11 @@ def random_f_monotone_C(L: _Lattice, bottom_to_bottom: bool = False, seed=None):
             f[i] = R.choice(pa, p=p / p.sum())
     #assert L.f_is_monotone(f)
     return f
+
+
+random_f_monotone.method_A = random_f_monotone_A
+random_f_monotone.method_B = random_f_monotone_B
+random_f_monotone.method_C = random_f_monotone_C
 
 
 def random_f_lub(L: _Lattice, seed: Optional[int] = None, **kwargs):

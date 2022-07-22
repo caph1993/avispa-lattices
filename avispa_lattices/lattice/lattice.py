@@ -1,7 +1,7 @@
 from __future__ import annotations
 import functools
 from random import random
-from typing import Any, Callable, Generic, Iterable, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, cast, overload
+from typing import Any, Callable, Generator, Generic, Iterable, List, Optional, Sequence, Set, Tuple, Type, TypeVar, Union, cast, overload
 import numpy as np
 
 from ..visualization import graphviz
@@ -69,6 +69,10 @@ class Relation:
 
     def validate(self):
         pass  # All binary matrices are valid relations
+
+    @property
+    def geq(self):
+        return self.leq.T
 
     @property
     def is_poset(self):
@@ -314,6 +318,22 @@ class Poset(Relation):
         n represents infinity.
         '''
         return interface.child_to_dist(self.child)
+
+    @cached_property
+    def ascendants(self) -> List[List[int]]:
+        'For each i, topo-sorted list of elements j that satisfy j geq i'
+        n = self.n
+        geq = self.geq
+        topo = self.toposort_bottom_up
+        return [[j for j in topo if geq[j, i]] for i in range(n)]
+
+    @cached_property
+    def descendants(self) -> List[List[int]]:
+        'For each i, topo-sorted list of elements j that satisfy j leq i.'
+        n = self.n
+        leq = self.leq
+        topo = self.toposort_bottom_up
+        return [[j for j in topo if leq[j, i]] for i in range(n)]
 
     '''
     @section
