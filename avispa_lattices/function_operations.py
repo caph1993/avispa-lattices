@@ -130,6 +130,30 @@ def fix_f_naive(L: Lattice, f: Endomorphism,
     return f
 
 
+def fix_f_naive_upwards(L: Lattice, f: Endomorphism) -> Endomorphism:
+    lub = L.lub
+    glb = L.glb
+    leq = L.leq
+    f = f.copy()
+    done = False
+    while not done:
+        done = True
+        for i in range(L.n):
+            for j in range(L.n):
+                k = lub[i, j]
+                fi_lub_fj = lub[f[i], f[j]]
+                if f[k] == fi_lub_fj:
+                    pass
+                elif leq[f[k], fi_lub_fj]:
+                    f[k] = fi_lub_fj
+                    done = False
+                else:
+                    f[i] = lub[f[i], f[k]]
+                    f[j] = lub[f[j], f[k]]
+                    done = False
+    return f
+
+
 def f_glb_DMeet_plus(L: Lattice,
                      functions: Sequence[Endomorphism]) -> Endomorphism:
     """

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Callable, Iterable, List, Optional, Tuple
 from typing_extensions import Protocol
 import numpy as np
 from ..utils.random_state import random_state
-from ..function_operations import fix_f_naive
+from ..function_operations import fix_f_naive, fix_f_naive_upwards
 from ..utils import _enum as AL_enum
 from ..utils._function_types import Endomorphism, partial_endomorphism
 
@@ -65,18 +65,29 @@ def random_f_monotone_B(L: _Lattice, seed=None):
     return f
 
 
-def random_f_monotone_C(L: _Lattice, bottom_to_bottom: bool = False, seed=None):
+def random_f_monotone_C(L: _Lattice, bottom_to_bottom: bool = False, seed=None,
+                        _prob=0.4):
     R = random_state(seed)
-    f = partial_endomorphism(L.n)
+    f = L.f_bottom()
     n_above = L.leq.sum(axis=1)
-    f[L.bottom] = L.bottom
     start = 1 if bottom_to_bottom else 0
-    for i in L.toposort_bottom_up[start:]:
-        f[i] = L.lub_of_many(f[k] for k in L.children[i])
-        while R.random() < 0.5 and L.parents[f[i]]:
-            pa = L.parents[f[i]]
-            p = n_above[pa]
-            f[i] = R.choice(pa, p=p / p.sum())
+    done = False
+
+    def run():
+        nonlocal done
+        for i in L.toposort_bottom_up[start:]:
+            f[i] = L.lub_of_many(f[k] for k in L.children[i])
+            while R.random() < _prob and L.parents[f[i]]:
+                pa = L.parents[f[i]]
+                p = n_above[pa]
+                f[i] = R.choice(pa, p=p / p.sum())
+        done = f != L.f_bottom() and f != L.f_top()
+        if not done and R.random() < 1 / L.n:
+            done = True
+        return
+
+    while not done:
+        run()
     #assert L.f_is_monotone(f)
     return f
 
@@ -92,6 +103,8 @@ def random_f_lub(L: _Lattice, seed: Optional[int] = None, **kwargs):
 
 def random_f_lub_B(L: _Lattice, seed: Optional[int] = None):
     f = L.random_f_monotone(seed, bottom_to_bottom=True)
+    if np.random.random() < 0.5:
+        return fix_f_naive_upwards(L, f)
     return fix_f_naive(L, f)
 
 

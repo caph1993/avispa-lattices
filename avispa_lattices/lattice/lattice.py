@@ -530,3 +530,11 @@ class Lattice(Poset):
     @implemented_at(random_function.random_f_lub)
     def random_f_lub(self, *args, **kwargs):
         ...
+
+    def f_bottom(self) -> Endomorphism:
+        return [self.bottom] * self.n
+
+    def f_top(self) -> Endomorphism:
+        f = [self.top] * self.n
+        f[self.bottom] = self.bottom
+        return f
