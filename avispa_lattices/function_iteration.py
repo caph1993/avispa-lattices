@@ -1,8 +1,8 @@
 from __future__ import annotations
 from functools import reduce
-from optparse import Option
 from typing import TYPE_CHECKING, Any, Generator, Iterable, Iterator, Optional, Tuple, Union, cast, List, Sequence
 from typing_extensions import Literal, get_args as literal_args
+
 from .utils._function_types import PartialEndomorphism, Endomorphism, partial_endomorphism
 from .utils.iterators import product_list
 from itertools import islice
@@ -149,10 +149,6 @@ def f_iter_monotones(L: _Lattice, bottom_to_bottom: bool = False,
         yield from backtrack(0)
 
 
-def _cast(it: Iterator[PartialEndomorphism]):
-    return cast(Iterator[Endomorphism], it)
-
-
 def _f_iter_monotones_restricted(
     self: _Lattice,
     f: PartialEndomorphism,
@@ -167,11 +163,6 @@ def _f_iter_monotones_restricted(
     '''
     m = len(topo)
     set_lub = self.lub_of_many
-    _f: Endomorphism = f  # type: ignore
-
-    for i in range(self.n):
-        assert i in topo
-        assert i not in children[i]
 
     def backtrack(i):
         'f[topo[j]] is fixed for all j<i. Backtrack f[topo[k]] for all k>=i, k<m'
@@ -179,7 +170,9 @@ def _f_iter_monotones_restricted(
             yield f
             return
 
-        min_value = set_lub(_f[x] for x in children[topo[i]])
+        min_value = set_lub(f[x] for x in children[topo[i]])
+        assert (topo[i] not in children[topo[i]]
+               ), f'{self.show(), i, topo[i], children[topo[i]]}'
         for k in geq_list[min_value]:
             f[topo[i]] = k
             yield from backtrack(i + 1)
@@ -328,10 +321,11 @@ def f_is_lub_of_irreducibles(self: _Lattice, f):
 
 def f_iter_lub(self: _Lattice, bottom_to_bottom: bool = True,
                in_place: bool = False):
-    if self.is_distributive:
-        yield from f_iter_lub_distributive(self, bottom_to_bottom, in_place)
-    else:
-        yield from f_iter_lub_bruteforce(self, bottom_to_bottom, in_place)
+    # if self.is_distributive:
+    #     yield from f_iter_lub_distributive(self, bottom_to_bottom, in_place)
+    # NOT WORKING: python3 -m avispa_lattices.testing.vtest_random_f
+    # else:
+    yield from f_iter_lub_bruteforce(self, bottom_to_bottom, in_place)
     return
 
 

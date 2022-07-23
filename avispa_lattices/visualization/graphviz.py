@@ -1,14 +1,16 @@
 from __future__ import annotations
 import itertools
 from pathlib import Path
+from platform import platform
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, cast
 from pydotplus import graph_from_edges
 from pydotplus.graphviz import Node, Edge
 
 if TYPE_CHECKING:
-    from .._function_types import PartialEndomorphism
+    from ..utils._function_types import PartialEndomorphism
     from ..lattice.lattice import Lattice, Poset, Relation
 from typing import Sequence, Tuple
+from .gui import new_visualizer
 
 
 def graphviz(
@@ -58,6 +60,10 @@ def graphviz(
             from IPython.display import Image
             img = Image(png)
             display(img)
+        elif platform().startswith('Linux'):
+            vpath = new_visualizer()
+            with open(vpath.png(), 'wb') as f:
+                f.write(png)
         else:
             from io import BytesIO
             from PIL import Image

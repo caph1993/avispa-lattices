@@ -151,16 +151,16 @@ def non_bottoms(self: Poset):
 
 def tops(self: Poset):
     'top elements of the poset'
-    n = self.n
-    nleq = self.leq.sum(axis=0)
-    return [i for i in range(n) if nleq[i] == n]
+    gt = self.leq.T.copy()
+    gt[np.diag_indices_from(gt)] = False
+    return [*np.flatnonzero(~gt.any(axis=0))]
 
 
 def non_tops(self: Poset):
     'non-top elements of the poset'
-    n = self.n
-    nleq = self.leq.sum(axis=0)
-    return [i for i in range(n) if nleq[i] < n]
+    lt = self.leq.copy()
+    lt[np.diag_indices_from(lt)] = False
+    return [*np.flatnonzero(~lt.any(axis=0))]
 
 
 def _toposort_children(self: Poset, domain: Optional[Sequence[int]]):

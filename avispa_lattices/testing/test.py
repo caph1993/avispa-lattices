@@ -31,9 +31,8 @@ def test_M5():
 
 
 def test_generation_and_f_iteration():
-    R = np.random.RandomState(12382332)
-    seeds = R.randint(0, np.iinfo(np.int32).min, size=100)
-    lat_list = [AL.random_lattice(20, seed=s, method='Czech') for s in seeds]
+    AL.random.seed(12382332)
+    lat_list = [AL.random_lattice(20) for _ in range(30)]
     for L in lat_list:
         assert L.is_poset
         assert L.is_lattice
@@ -76,11 +75,9 @@ L.show(F[0], F[10], L.f_lub(F[0], F[10]), L.f_glb_pointwise(F[0], F[10]),
 
 
 def test_f_glb():
-    R = np.random.RandomState(123976)
+    AL.random.seed(123976)
     #P = AL.random_poset
-    L = AL.random_lattice(5, seed=R.randint(0,
-                                            np.iinfo(np.int32).max),
-                          method='Czech')
+    L = AL.random_lattice(5)
     L.show()
     print(L.is_distributive)
     # for f in L.f_iter(method='monotones'):

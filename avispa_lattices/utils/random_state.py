@@ -1,9 +1,18 @@
-from typing import Optional
+from typing import Optional, Tuple, Union
 import numpy as np
 
+Shape = Union[int, Tuple[int, ...]]
 
-def random_state(seed: Optional[int] = None):
-    if seed is None:
+
+class AL_RandomState(np.random.RandomState):
+
+    def randint32(self, size: Optional[Shape] = None):
+        low = np.iinfo(np.int32).min
         high = np.iinfo(np.int32).max
-        seed = np.random.randint(0, high)
-    return np.random.RandomState(seed=seed)
+        return super().randint(low, high, size=size)
+
+    def set_seed(self, seed: Optional[int] = None):
+        super().seed(seed)
+
+
+AL_random = AL_RandomState()

@@ -1,8 +1,8 @@
 import numpy as np
-from ..utils.random_state import random_state
+from ..utils.random_state import AL_random
 
 
-def random_lattice(n: int, seed=None):
+def random_lattice(n: int):
     '''
     Description:
     
@@ -18,7 +18,6 @@ def random_lattice(n: int, seed=None):
            but not unique bottom element
            (fixed in Poset class)
     '''
-    R = random_state(seed=seed)
     J = np.zeros((n, n), dtype=int) - 1
     for i in range(n):
         J[i, i] = i
@@ -26,7 +25,7 @@ def random_lattice(n: int, seed=None):
     M = np.zeros((n,), dtype=np.int64)
     Q = np.zeros((n,), dtype=np.int64)
 
-    rnd = lambda k: R.randint(0, k)
+    rnd = lambda k: AL_random.randint(0, k)
 
     def S(i: int):
         return max(2, int(np.ceil(np.sqrt(i))))

@@ -271,11 +271,6 @@ class Poset(Relation):
         return identity.find_isomorphism(self, other) is not None
 
     @cached_property
-    def hash(self):
-        'hash number for this poset'
-        return identity.hasher(sorted(self.hash_elems))
-
-    @cached_property
     def canonical(self):
         rank = identity.canonical_rank(self)
         P = self.reindex(rank)
@@ -475,6 +470,8 @@ class Lattice(Poset):
             *(graph._toposort_children(self, irrcomps[i]) for i in range(m)))
         m_topo = cast(Tuple[List[int]], m_topo)
         m_children = cast(Tuple[List[List[int]]], m_children)
+        # for i in range(m):
+        #     assert i not in m_children[i]
         return m, m_topo, m_children
 
     def lub_of_many(self, elems: Iterable[int]) -> int:

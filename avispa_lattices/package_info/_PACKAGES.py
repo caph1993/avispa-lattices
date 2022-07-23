@@ -2,7 +2,7 @@
 avispa_lattices
 avispa_lattices.utils
 avispa_lattices.testing
-avispa_lattices.random
+avispa_lattices.random_lattice
 avispa_lattices.package_info
 avispa_lattices.lattice
 avispa_lattices.visualization

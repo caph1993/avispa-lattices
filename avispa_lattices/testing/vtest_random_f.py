@@ -12,8 +12,9 @@ def main():
 
 
 def main_monotone():
+    AL.random.seed(0)
     vpath = AL.new_visualizer('random_f_monotone')
-    L = AL.random_lattice(10, seed=42)
+    L = AL.random_lattice(10)
     for i in range(100):
         f = L.random_f_monotone()
         png, txt = next(vpath)
@@ -24,8 +25,9 @@ def main_monotone():
 
 
 def main_lub():
+    AL.random.seed(0)
     vpath = AL.new_visualizer('random_f_lub')
-    L = AL.random_lattice(10, seed=42)
+    L = AL.random_lattice(10)
     for i in range(100):
         f = L.random_f_lub()
         png, txt = next(vpath)
@@ -36,7 +38,8 @@ def main_lub():
 
 
 def uniformity_monotone_7():
-    L = AL.random_lattice(7, seed=42)
+    AL.random.seed(0)
+    L = AL.random_lattice(7)
     all_monotones = list(L.f_iter_monotones())
     n = len(all_monotones)
     print(n)
@@ -60,8 +63,9 @@ def uniformity_monotone_7():
 
 
 def uniformity_monotone_6():
+    AL.random.seed(0)
     for seed in range(5):
-        L = AL.random_lattice(6, seed=seed)
+        L = AL.random_lattice(6)
         all_monotones = list(L.f_iter_monotones())
         n = len(all_monotones)
         all_monotones = set(map(tuple, all_monotones))
@@ -90,8 +94,9 @@ def uniformity_monotone_6():
 
 
 def uniformity_lub_6():
+    AL.random.seed(0)
     for seed in range(5):
-        L = AL.random_lattice(6, seed=seed)
+        L = AL.random_lattice(6)
         all_lubs = list(L.f_iter_lub())
         n = len(all_lubs)
         all_lubs = set(map(tuple, all_lubs))
