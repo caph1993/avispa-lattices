@@ -119,9 +119,11 @@ def fix_f_naive(L: Lattice, f: Endomorphism,
             for j in range(L.n):
                 k = lub[i, j]
                 fi_lub_fj = lub[f[i], f[j]]
-                if leq[fi_lub_fj, f[k]]:
+                if fi_lub_fj == f[k]:
+                    pass
+                elif leq[fi_lub_fj, f[k]]:
                     f[k] = fi_lub_fj
-                elif f[k] != fi_lub_fj:
+                else:
                     f[i] = glb[f[i], f[k]]
                     f[j] = glb[f[j], f[k]]
         if f == f_prev:

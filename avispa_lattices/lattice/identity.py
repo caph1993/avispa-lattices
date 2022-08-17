@@ -46,7 +46,7 @@ def _hash_elems(P: Poset, rounds: int, salt: int):
 def hash_perm_invariant(P: Poset, mat: npUInt64Matrix):
     h = lambda l: hasher(sorted(l))
     a = [hasher((h(mat[:, i]), h(mat[i, :]))) for i in range(P.n)]
-    return np.array(a, dtype=int)
+    return np.array(a, dtype=np.int64)
 
 
 def find_isomorphism(P: Poset, other: Poset):
